@@ -29,6 +29,7 @@ This project provides a solid foundation for building your own admin panel or in
 ## 🚀 Getting Started
 
 ### 1. Install Dependencies
+
 ```bash
 pnpm install
 # or
@@ -38,6 +39,7 @@ yarn install
 ```
 
 ### 2. Set up Environment Variables  
+
 Create a `.env.local` file at the project root:
 
 ```bash
@@ -46,6 +48,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
 ```
 
 ### 3. Run the Development Server
+
 ```bash
 pnpm dev
 # or
@@ -75,5 +78,12 @@ Then open [http://localhost:3000](http://localhost:3000) in your browser.
 - Authentication, database queries, and storage should go through Supabase APIs.
 - Styling and global CSS are handled by Tailwind (`tailwind.config.ts` and `src/css`).
 - All UI components live in `src/components`.
+
+---
+
+- task list
+- 全局安装pnpm
+- git fetch 命令
+- 登录 注册 修改密码功能实现
 
 ---
