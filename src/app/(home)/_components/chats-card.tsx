@@ -1,5 +1,5 @@
 import { DotIcon } from "@/assets/icons";
-import { formatMessageTime } from "@/lib/format-message-time";
+import { formatMessageTime } from "@/lib/tools";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import Link from "next/link";

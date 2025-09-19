@@ -1,5 +1,5 @@
 import { TrendingUpIcon } from "@/assets/icons";
-import { compactFormat } from "@/lib/format-number";
+import { compactFormat } from "@/lib/tools";
 import { cn } from "@/lib/utils";
 import { getCampaignVisitorsData } from "@/services/charts.services";
 import { CampaignVisitorsChart } from "./chart";
