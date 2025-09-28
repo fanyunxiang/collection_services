@@ -5,13 +5,13 @@ import Image from "next/image";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Sign in",
+  title: "Sign In & Sign Up",
 };
 
 export default function SignIn() {
   return (
     <>
-      <Breadcrumb pageName="Sign In" />
+      <Breadcrumb pageName="登录 / 注册" />
 
       <div className="rounded-[10px] bg-white shadow-1 dark:bg-gray-dark dark:shadow-card">
         <div className="flex flex-wrap items-center">
@@ -40,16 +40,15 @@ export default function SignIn() {
                 />
               </Link>
               <p className="mb-3 text-xl font-medium text-dark dark:text-white">
-                Sign in to your account
+                欢迎使用 Collection Services
               </p>
 
               <h1 className="mb-4 text-2xl font-bold text-dark dark:text-white sm:text-heading-3">
-                Welcome Back!
+                一站式完成登录与注册
               </h1>
 
               <p className="w-full max-w-[375px] font-medium text-dark-4 dark:text-dark-6">
-                Please sign in to your account by completing the necessary
-                fields below
+                使用现有账号登录，或是快速创建一个新账号，统一的表单体验可以帮助你更高效地开始工作。
               </p>
 
               <div className="mt-31">

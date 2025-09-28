@@ -1,32 +1,67 @@
-import Link from "next/link";
-import GoogleSigninButton from "../GoogleSigninButton";
-import SigninWithPassword from "../SigninWithPassword";
+"use client";
+
+import AuthForm, { type AuthFormMode } from "@/components/Auth/AuthForm";
+import { cn } from "@/lib/utils";
+import { useState } from "react";
+
+const tabs: { key: AuthFormMode; label: string; description: string }[] = [
+  {
+    key: "login",
+    label: "账号登录",
+    description: "使用已有账号访问系统功能",
+  },
+  {
+    key: "register",
+    label: "注册账号",
+    description: "立即创建账号开始使用",
+  },
+];
 
 export default function Signin() {
+  const [activeTab, setActiveTab] = useState<AuthFormMode>("login");
+
   return (
-    <>
-      <GoogleSigninButton text="Sign in" />
+    <div>
+      <div className="mb-7 flex flex-col gap-2">
+        <div className="flex gap-2 rounded-lg bg-gray-2 p-1 text-body-sm font-medium dark:bg-dark-3">
+          {tabs.map((tab) => {
+            const isActive = tab.key === activeTab;
 
-      <div className="my-6 flex items-center justify-center">
-        <span className="block h-px w-full bg-stroke dark:bg-dark-3"></span>
-        <div className="block w-full min-w-fit bg-white px-3 text-center font-medium dark:bg-gray-dark">
-          Or sign in with email
+            return (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => setActiveTab(tab.key)}
+                className={cn(
+                  "group flex-1 rounded-md px-5 py-3 text-left transition focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                  isActive
+                    ? "bg-white shadow-1 dark:bg-dark-2"
+                    : "bg-transparent",
+                )}
+              >
+                <span
+                  className={cn(
+                    "block text-base font-semibold",
+                    isActive ? "text-primary" : "text-dark dark:text-white",
+                  )}
+                >
+                  {tab.label}
+                </span>
+                <span
+                  className={cn(
+                    "mt-1 block text-body-sm",
+                    isActive ? "text-primary" : "text-dark-4 dark:text-dark-6",
+                  )}
+                >
+                  {tab.description}
+                </span>
+              </button>
+            );
+          })}
         </div>
-        <span className="block h-px w-full bg-stroke dark:bg-dark-3"></span>
       </div>
 
-      <div>
-        <SigninWithPassword />
-      </div>
-
-      <div className="mt-6 text-center">
-        <p>
-          Don’t have any account?{" "}
-          <Link href="/auth/sign-up" className="text-primary">
-            Sign Up
-          </Link>
-        </p>
-      </div>
-    </>
+      <AuthForm mode={activeTab} />
+    </div>
   );
 }
