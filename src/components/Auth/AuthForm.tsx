@@ -7,6 +7,7 @@ import { Checkbox } from "@/components/FormElements/checkbox";
 import { cn } from "@/lib/utils";
 import { login, register } from "@/services/authService";
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 
 type AuthFormMode = "login" | "register";
 
@@ -54,6 +55,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
   );
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     setFeedback(null);
@@ -100,11 +102,11 @@ export default function AuthForm({ mode }: AuthFormProps) {
     try {
       if (mode === "login") {
         if (!loginState.identifier.trim()) {
-          throw new Error("请输入用户名或邮箱");
+          throw new Error("Please enter a username or email.");
         }
 
         if (!loginState.password) {
-          throw new Error("请输入密码");
+          throw new Error("Please enter your password.");
         }
 
         setLoading(true);
@@ -112,27 +114,29 @@ export default function AuthForm({ mode }: AuthFormProps) {
         const response = await login({
           identifier: loginState.identifier.trim(),
           password: loginState.password,
+          remember: loginState.remember,
         });
 
         setFeedback({
           variant: "success",
-          message: response.message || "登录成功",
+          message: response.message || "Signed in successfully.",
         });
 
         setLoginState(LOGIN_INITIAL_STATE);
+        router.replace("/");
         return;
       }
 
       if (!registerState.username.trim()) {
-        throw new Error("请输入用户名");
+        throw new Error("Please enter a username.");
       }
 
       if (!registerState.password) {
-        throw new Error("请输入密码");
+        throw new Error("Please enter your password.");
       }
 
       if (registerState.password !== registerState.confirmPassword) {
-        throw new Error("两次输入的密码不一致");
+        throw new Error("Passwords do not match.");
       }
 
       setLoading(true);
@@ -146,12 +150,13 @@ export default function AuthForm({ mode }: AuthFormProps) {
 
       setFeedback({
         variant: "success",
-        message: response.message || "注册成功",
+        message: response.message || "Account created successfully.",
       });
 
       setRegisterState(REGISTER_INITIAL_STATE);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "提交失败";
+      const message =
+        error instanceof Error ? error.message : "Submission failed.";
       setFeedback({ variant: "error", message });
     } finally {
       setLoading(false);
@@ -163,7 +168,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
       {feedback && (
         <Alert
           variant={feedback.variant}
-          title={feedback.variant === "success" ? "操作成功" : "操作失败"}
+          title={feedback.variant === "success" ? "Success" : "Error"}
           description={feedback.message}
         />
       )}
@@ -171,8 +176,8 @@ export default function AuthForm({ mode }: AuthFormProps) {
       {mode === "register" && (
         <InputGroup
           type="text"
-          label="用户名"
-          placeholder="请输入用户名"
+          label="Username"
+          placeholder="Enter your username"
           name="username"
           handleChange={handleChange}
           value={(currentState as RegisterState).username}
@@ -185,8 +190,8 @@ export default function AuthForm({ mode }: AuthFormProps) {
       {mode === "login" && (
         <InputGroup
           type="text"
-          label="用户名或邮箱"
-          placeholder="请输入用户名或邮箱"
+          label="Username or email"
+          placeholder="Enter your username or email"
           name="identifier"
           handleChange={handleChange}
           value={(currentState as LoginState).identifier}
@@ -199,8 +204,8 @@ export default function AuthForm({ mode }: AuthFormProps) {
       {mode === "register" && (
         <InputGroup
           type="email"
-          label="邮箱（可选）"
-          placeholder="请输入邮箱，默认将根据用户名生成"
+          label="Email (optional)"
+          placeholder="Enter an email or leave blank to auto-generate"
           name="email"
           handleChange={handleChange}
           value={(currentState as RegisterState).email}
@@ -211,8 +216,10 @@ export default function AuthForm({ mode }: AuthFormProps) {
 
       <InputGroup
         type="password"
-        label="密码"
-        placeholder={mode === "login" ? "请输入密码" : "请设置密码"}
+        label="Password"
+        placeholder={
+          mode === "login" ? "Enter your password" : "Create a password"
+        }
         name="password"
         handleChange={handleChange}
         value={currentState.password}
@@ -224,8 +231,8 @@ export default function AuthForm({ mode }: AuthFormProps) {
       {mode === "register" && (
         <InputGroup
           type="password"
-          label="确认密码"
-          placeholder="请再次输入密码"
+          label="Confirm password"
+          placeholder="Re-enter your password"
           name="confirmPassword"
           handleChange={handleChange}
           value={(currentState as RegisterState).confirmPassword}
@@ -238,8 +245,8 @@ export default function AuthForm({ mode }: AuthFormProps) {
       {mode === "register" && (
         <InputGroup
           type="text"
-          label="角色（可选）"
-          placeholder="例如：user 或 admin"
+          label="Role (optional)"
+          placeholder="e.g. user or admin"
           name="role"
           handleChange={handleChange}
           value={(currentState as RegisterState).role}
@@ -251,7 +258,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
       {mode === "login" && (
         <div className="flex items-center justify-between text-body-sm font-medium">
           <Checkbox
-            label="记住我"
+            label="Remember me"
             name="remember"
             minimal
             radius="md"
@@ -259,7 +266,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
             onChange={handleCheckboxChange}
           />
 
-          <span className="text-dark-4">忘记密码？</span>
+          <span className="text-dark-4">Forgot password?</span>
         </div>
       )}
 
@@ -271,7 +278,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
         )}
         disabled={loading}
       >
-        {mode === "login" ? "立即登录" : "创建账号"}
+        {mode === "login" ? "Sign in" : "Create account"}
         {loading && (
           <span className="inline-block size-4 animate-spin rounded-full border-2 border-solid border-white border-t-transparent" />
         )}

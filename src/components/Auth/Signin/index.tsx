@@ -7,13 +7,13 @@ import { useState } from "react";
 const tabs: { key: AuthFormMode; label: string; description: string }[] = [
   {
     key: "login",
-    label: "账号登录",
-    description: "使用已有账号访问系统功能",
+    label: "Sign in",
+    description: "Access the dashboard with your existing account",
   },
   {
     key: "register",
-    label: "注册账号",
-    description: "立即创建账号开始使用",
+    label: "Create account",
+    description: "Open a new account to get started",
   },
 ];
 

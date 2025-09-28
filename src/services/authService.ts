@@ -10,6 +10,7 @@ export interface AuthApiResponse<T = unknown> {
 export interface LoginRequest {
   identifier: string;
   password: string;
+  remember?: boolean;
 }
 
 export interface RegisterRequest {
@@ -39,17 +40,18 @@ async function authRequest<T>(
   const result = (await response.json()) as AuthApiResponse<T>;
 
   if (!response.ok) {
-    throw new Error(result.message || "认证请求失败");
+    throw new Error(result.message || "Authentication request failed.");
   }
 
   return result;
 }
 
-export async function login({ identifier, password }: LoginRequest) {
+export async function login({ identifier, password, remember }: LoginRequest) {
   const key = identifier.includes("@") ? "email" : "username";
   return authRequest("login", {
     [key]: identifier,
     password,
+    remember,
   });
 }
 

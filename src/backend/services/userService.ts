@@ -45,11 +45,11 @@ export async function registerUser({
   email,
 }: RegisterPayload): Promise<RegisterResult> {
   if (!username) {
-    throw new Error('用户名不能为空')
+    throw new Error('Username is required.')
   }
 
   if (!password) {
-    throw new Error('密码不能为空')
+    throw new Error('Password is required.')
   }
 
   const normalizedEmail = normalizeEmail(email ?? username)
@@ -69,7 +69,7 @@ export async function registerUser({
   }
 
   if (!data.user) {
-    throw new Error('用户创建失败')
+    throw new Error('Failed to create user.')
   }
 
   return {
@@ -86,13 +86,13 @@ export async function loginUser({
   password,
 }: LoginPayload): Promise<LoginResult> {
   if (!password) {
-    throw new Error('密码不能为空')
+    throw new Error('Password is required.')
   }
 
   const identifier = username ?? email
 
   if (!identifier) {
-    throw new Error('请提供用户名或邮箱')
+    throw new Error('Please provide a username or email address.')
   }
 
   const normalizedEmail = normalizeEmail(identifier)
@@ -106,7 +106,7 @@ export async function loginUser({
     if (error instanceof AuthError) {
       throw new Error(error.message)
     }
-    throw new Error('登录失败')
+    throw new Error('Login failed.')
   }
 
   return {
