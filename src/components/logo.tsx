@@ -1,27 +1,9 @@
-import darkLogo from "@/assets/logos/dark.svg";
-import logo from "@/assets/logos/main.svg";
-import Image from "next/image";
-
 export function Logo() {
   return (
-    <div className="relative h-8 max-w-[10.847rem]">
-      <Image
-        src={logo}
-        fill
-        className="dark:hidden"
-        alt="collection-services logo"
-        role="presentation"
-        quality={100}
-      />
-
-      <Image
-        src={darkLogo}
-        fill
-        className="hidden dark:block"
-        alt="collection-services logo"
-        role="presentation"
-        quality={100}
-      />
+    <div className="flex items-center">
+      <span className="text-xl font-semibold lowercase tracking-tight text-slate-900 transition-colors dark:text-slate-100">
+        collection-services
+      </span>
     </div>
   );
 }
