@@ -12,26 +12,24 @@ flowchart TD
   subgraph Frontend Helpers
     AuthSvc[src/services/authService.ts]
   end
+  subgraph Client Storage
+    AuthStorage[(Browser localStorage)]
+  end
   subgraph API Routes
-    AuthAPI[/api/auth]
     BookingAPI[/api/booking]
     DocumentAPI[/api/documents]
     FeedbackAPI[/api/feedback]
   end
   subgraph Backend Services
-    UserSvc[userService]
     BookingSvc[bookingService]
     DocumentSvc[documentService]
     FeedbackSvc[feedbackService]
     Validators[utils/validators]
     Responses[utils/responses]
-    Supabase[supabaseClient]
   end
 
   AuthPage --> AuthSvc
-  AuthSvc --> AuthAPI
-  AuthAPI --> UserSvc
-  UserSvc --> Supabase
+  AuthSvc --> AuthStorage
 
   AuthPage --> BookingAPI
   BookingAPI --> BookingSvc
@@ -57,18 +55,17 @@ flowchart TD
 - Other feature screens (booking, documents, feedback) submit JSON payloads straight to their matching API endpoints.
 
 ### 2. Frontend helpers
-- `src/services/authService.ts` wraps `fetch` calls to `/api/auth`, automatically injecting the selected action (`login` or `register`), forwarding identifiers/passwords, and throwing when the response is not OK. This keeps UI components slim and testable.
+- `src/services/authService.ts` now reads and writes user accounts directly from `localStorage`, guaranteeing that authentication stays entirely on the client. Shared helpers normalize identifiers, detect duplicates, and ensure roles follow the "contains 'admin' => admin" rule so that the UI can remain lean.
 
 ### 3. API layer
-- Each route under `src/app/api` parses the incoming JSON, delegates to the corresponding backend service, and normalizes the response via the shared helpers.
-- The auth route also manages cookie issuance so the browser keeps Supabase tokens in sync when the login succeeds.
+- Each route under `src/app/api` (bookings, documents, feedback) parses the incoming JSON, delegates to the corresponding backend service, and normalizes the response via the shared helpers.
+- Authentication no longer traverses these API routes; all login and registration calls resolve entirely on the client through the local storage helpers above.
 
 ### 4. Backend service helpers
-- Authentication helpers in `src/backend/services/userService.ts` normalize usernames into emails, validate required fields, and use the Supabase admin or server clients to create accounts or start sessions.
-- Domain services (`bookingService.ts`, `documentService.ts`, `feedbackService.ts`) act as validation/normalization layers. They rely on `utils/validators.ts` to enforce data shape before handing the record back to the API route.
-
+- Domain services (`bookingService.ts`, `documentService.ts`, `feedbackService.ts`) continue to act as validation/normalization layers. They rely on `utils/validators.ts` to enforce data shape before handing the record back to the API route.
+- The previous Supabase-based auth helpers are now obsolete for the current flow; they can be revisited later if server-side persistence becomes necessary again.
 ### 5. Infrastructure integration
-- `src/backend/lib/supabaseClient.ts` centralizes Supabase configuration, ensures all mandatory environment variables are present, and exports both anon (server) and service-role clients for downstream modules.
+- Supabase clients remain available for future integrations, but authentication no longer depends on them. This means the app can run without any Supabase environment variables while keeping the domain service patterns intact for other features.
 
 ## Quick start for extending services
 1. **Design the payload** you expect from the client and codify it in a new service module under `src/backend/services`. Reuse the `ensure*` helpers or add new ones in `utils/validators.ts` when you find yourself validating similar patterns.

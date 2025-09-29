@@ -22,7 +22,6 @@ type RegisterState = {
   email: string;
   password: string;
   confirmPassword: string;
-  role: string;
 };
 
 type Feedback = {
@@ -41,7 +40,6 @@ const REGISTER_INITIAL_STATE: RegisterState = {
   email: "",
   password: "",
   confirmPassword: "",
-  role: "user",
 };
 
 interface AuthFormProps {
@@ -145,7 +143,6 @@ export default function AuthForm({ mode }: AuthFormProps) {
         username: registerState.username.trim(),
         password: registerState.password,
         email: registerState.email.trim() || undefined,
-        role: registerState.role.trim() || undefined,
       });
 
       setFeedback({
@@ -239,19 +236,6 @@ export default function AuthForm({ mode }: AuthFormProps) {
           iconPosition="left"
           icon={<PasswordIcon className="text-dark-4" />}
           required
-        />
-      )}
-
-      {mode === "register" && (
-        <InputGroup
-          type="text"
-          label="Role (optional)"
-          placeholder="e.g. user or admin"
-          name="role"
-          handleChange={handleChange}
-          value={(currentState as RegisterState).role}
-          iconPosition="left"
-          icon={<UserIcon className="text-dark-4" />}
         />
       )}
 
