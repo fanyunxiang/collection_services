@@ -4,16 +4,14 @@ import AuthForm, { type AuthFormMode } from "@/components/Auth/AuthForm";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 
-const tabs: { key: AuthFormMode; label: string; description: string }[] = [
+const tabs: { key: AuthFormMode; label: string }[] = [
   {
     key: "login",
     label: "Sign in",
-    description: "Access the dashboard with your existing account",
   },
   {
     key: "register",
     label: "Create account",
-    description: "Open a new account to get started",
   },
 ];
 
@@ -46,14 +44,6 @@ export default function Signin() {
                   )}
                 >
                   {tab.label}
-                </span>
-                <span
-                  className={cn(
-                    "mt-1 block text-body-sm",
-                    isActive ? "text-primary" : "text-dark-4 dark:text-dark-6",
-                  )}
-                >
-                  {tab.description}
                 </span>
               </button>
             );

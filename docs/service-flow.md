@@ -55,7 +55,7 @@ flowchart TD
 - Other feature screens (booking, documents, feedback) submit JSON payloads straight to their matching API endpoints.
 
 ### 2. Frontend helpers
-- `src/services/authService.ts` now reads and writes user accounts directly from `localStorage`, guaranteeing that authentication stays entirely on the client. Shared helpers normalize identifiers, detect duplicates, and ensure roles follow the "contains 'admin' => admin" rule so that the UI can remain lean.
+- `src/services/authService.ts` now reads and writes user accounts directly from `localStorage`, guaranteeing that authentication stays entirely on the client. Shared helpers normalize usernames, detect duplicates, and ensure roles follow the "contains 'admin' => admin" rule so that the UI can remain lean.
 
 ### 3. API layer
 - Each route under `src/app/api` (bookings, documents, feedback) parses the incoming JSON, delegates to the corresponding backend service, and normalizes the response via the shared helpers.

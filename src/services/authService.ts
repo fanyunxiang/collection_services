@@ -6,7 +6,7 @@ export interface AuthApiResponse<T = unknown> {
 }
 
 export interface LoginRequest {
-  identifier: string;
+  username: string;
   password: string;
   remember?: boolean;
 }
@@ -14,12 +14,10 @@ export interface LoginRequest {
 export interface RegisterRequest {
   username: string;
   password: string;
-  email?: string;
 }
 
 export type StoredUser = {
   username: string;
-  email?: string;
   password: string;
   role: "admin" | "user";
   createdAt: string;
@@ -27,7 +25,6 @@ export type StoredUser = {
 
 export type CurrentUser = {
   username: string;
-  email?: string;
   role: "admin" | "user";
   loggedInAt: string;
   remember: boolean;
@@ -87,30 +84,19 @@ function normalizeUsername(username: string): string {
   return username.trim();
 }
 
-function normalizeEmail(email?: string): string | undefined {
-  if (!email) return undefined;
-  const trimmed = email.trim();
-  return trimmed ? trimmed.toLowerCase() : undefined;
-}
-
 function determineRole(username: string): "admin" | "user" {
   return username.toLowerCase().includes("admin") ? "admin" : "user";
 }
 
-function findUserByIdentifier(
+function findUserByUsername(
   users: StoredUser[],
-  identifier: string,
+  username: string,
 ): StoredUser | undefined {
-  const normalizedIdentifier = identifier.trim().toLowerCase();
+  const normalizedUsername = username.trim().toLowerCase();
 
-  return users.find((user) => {
-    const usernameMatches = user.username.toLowerCase() === normalizedIdentifier;
-    const emailMatches =
-      typeof user.email === "string" &&
-      user.email.toLowerCase() === normalizedIdentifier;
-
-    return usernameMatches || emailMatches;
-  });
+  return users.find(
+    (user) => user.username.toLowerCase() === normalizedUsername,
+  );
 }
 
 function setCurrentUser(user: CurrentUser): void {
@@ -128,10 +114,8 @@ export function logout(): void {
 export async function register({
   username,
   password,
-  email,
-}: RegisterRequest): Promise<AuthApiResponse<{ username: string; role: "admin" | "user"; email?: string }>> {
+}: RegisterRequest): Promise<AuthApiResponse<{ username: string; role: "admin" | "user" }>> {
   const normalizedUsername = normalizeUsername(username);
-  const normalizedEmail = normalizeEmail(email);
 
   if (!normalizedUsername) {
     throw new Error("Username is required.");
@@ -143,26 +127,18 @@ export async function register({
 
   const users = getStoredUsers();
 
-  const duplicateUser = users.find((user) => {
-    const usernameMatches =
-      user.username.toLowerCase() === normalizedUsername.toLowerCase();
-    const emailMatches =
-      normalizedEmail &&
-      typeof user.email === "string" &&
-      user.email.toLowerCase() === normalizedEmail;
-
-    return usernameMatches || emailMatches;
-  });
+  const duplicateUser = users.find(
+    (user) => user.username.toLowerCase() === normalizedUsername.toLowerCase(),
+  );
 
   if (duplicateUser) {
-    throw new Error("An account with that username or email already exists.");
+    throw new Error("An account with that username already exists.");
   }
 
   const role = determineRole(normalizedUsername);
 
   const newUser: StoredUser = {
     username: normalizedUsername,
-    email: normalizedEmail,
     password,
     role,
     createdAt: new Date().toISOString(),
@@ -178,18 +154,17 @@ export async function register({
     data: {
       username: newUser.username,
       role: newUser.role,
-      email: newUser.email,
     },
   };
 }
 
 export async function login({
-  identifier,
+  username,
   password,
   remember = false,
 }: LoginRequest): Promise<AuthApiResponse<CurrentUser>> {
   const users = getStoredUsers();
-  const user = findUserByIdentifier(users, identifier);
+  const user = findUserByUsername(users, username);
 
   if (!user) {
     throw new Error("Account not found. Please register first.");
@@ -201,7 +176,6 @@ export async function login({
 
   const currentUser: CurrentUser = {
     username: user.username,
-    email: user.email,
     role: user.role,
     loggedInAt: new Date().toISOString(),
     remember: Boolean(remember),

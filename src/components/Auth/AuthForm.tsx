@@ -1,6 +1,6 @@
 "use client";
 
-import { EmailIcon, PasswordIcon, UserIcon } from "@/assets/icons";
+import { PasswordIcon, UserIcon } from "@/assets/icons";
 import InputGroup from "@/components/FormElements/InputGroup";
 import { Alert } from "@/components/ui-elements/alert";
 import { Checkbox } from "@/components/FormElements/checkbox";
@@ -12,14 +12,13 @@ import { useRouter } from "next/navigation";
 type AuthFormMode = "login" | "register";
 
 type LoginState = {
-  identifier: string;
+  username: string;
   password: string;
   remember: boolean;
 };
 
 type RegisterState = {
   username: string;
-  email: string;
   password: string;
   confirmPassword: string;
 };
@@ -30,14 +29,13 @@ type Feedback = {
 };
 
 const LOGIN_INITIAL_STATE: LoginState = {
-  identifier: "",
+  username: "",
   password: "",
   remember: false,
 };
 
 const REGISTER_INITIAL_STATE: RegisterState = {
   username: "",
-  email: "",
   password: "",
   confirmPassword: "",
 };
@@ -99,8 +97,8 @@ export default function AuthForm({ mode }: AuthFormProps) {
 
     try {
       if (mode === "login") {
-        if (!loginState.identifier.trim()) {
-          throw new Error("Please enter a username or email.");
+        if (!loginState.username.trim()) {
+          throw new Error("Please enter your username.");
         }
 
         if (!loginState.password) {
@@ -110,7 +108,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
         setLoading(true);
 
         const response = await login({
-          identifier: loginState.identifier.trim(),
+          username: loginState.username.trim(),
           password: loginState.password,
           remember: loginState.remember,
         });
@@ -142,7 +140,6 @@ export default function AuthForm({ mode }: AuthFormProps) {
       const response = await register({
         username: registerState.username.trim(),
         password: registerState.password,
-        email: registerState.email.trim() || undefined,
       });
 
       setFeedback({
@@ -187,27 +184,14 @@ export default function AuthForm({ mode }: AuthFormProps) {
       {mode === "login" && (
         <InputGroup
           type="text"
-          label="Username or email"
-          placeholder="Enter your username or email"
-          name="identifier"
+          label="Username"
+          placeholder="Enter your username"
+          name="username"
           handleChange={handleChange}
-          value={(currentState as LoginState).identifier}
+          value={(currentState as LoginState).username}
           iconPosition="left"
           icon={<UserIcon className="text-dark-4" />}
           required
-        />
-      )}
-
-      {mode === "register" && (
-        <InputGroup
-          type="email"
-          label="Email (optional)"
-          placeholder="Enter an email or leave blank to auto-generate"
-          name="email"
-          handleChange={handleChange}
-          value={(currentState as RegisterState).email}
-          iconPosition="left"
-          icon={<EmailIcon className="text-dark-4" />}
         />
       )}
 
