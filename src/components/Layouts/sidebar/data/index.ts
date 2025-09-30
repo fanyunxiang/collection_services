@@ -18,6 +18,24 @@ export type SidebarSection = {
   items: SidebarItem[];
 };
 
+function findFirstUrl(sections: SidebarSection[]): string | null {
+  for (const section of sections) {
+    for (const item of section.items) {
+      if (item.url) {
+        return item.url;
+      }
+
+      const nestedUrl = item.items.find((subItem) => subItem.url)?.url;
+
+      if (nestedUrl) {
+        return nestedUrl;
+      }
+    }
+  }
+
+  return null;
+}
+
 const USER_SECTIONS: SidebarSection[] = [
   {
     label: "SERVICES",
@@ -80,4 +98,18 @@ export function buildSidebarSections(role: "admin" | "user" | null): SidebarSect
   }
 
   return [];
+}
+
+export function getDefaultRouteForRole(
+  role: "admin" | "user" | null,
+): string {
+  if (role === "admin") {
+    return findFirstUrl(ADMIN_SECTIONS) ?? "/";
+  }
+
+  if (role === "user") {
+    return findFirstUrl(USER_SECTIONS) ?? "/";
+  }
+
+  return "/";
 }

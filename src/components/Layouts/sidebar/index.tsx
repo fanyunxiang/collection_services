@@ -8,6 +8,7 @@ import { useEffect, useMemo, useState } from "react";
 import { CURRENT_USER_STORAGE_KEY, getCurrentUser } from "@/services/authService";
 import {
   buildSidebarSections,
+  getDefaultRouteForRole,
   type SidebarSection,
 } from "./data";
 import { ArrowLeftIcon, ChevronUp } from "./icons";
@@ -21,6 +22,10 @@ export function Sidebar() {
   const [sections, setSections] = useState<SidebarSection[]>(() => {
     const currentUser = getCurrentUser();
     return buildSidebarSections(currentUser?.role ?? null);
+  });
+  const [defaultRoute, setDefaultRoute] = useState<string>(() => {
+    const currentUser = getCurrentUser();
+    return getDefaultRouteForRole(currentUser?.role ?? null);
   });
 
   const storageKeys = useMemo(() => {
@@ -58,7 +63,10 @@ export function Sidebar() {
   useEffect(() => {
     const syncSections = () => {
       const currentUser = getCurrentUser();
-      setSections(buildSidebarSections(currentUser?.role ?? null));
+      const role = currentUser?.role ?? null;
+
+      setSections(buildSidebarSections(role));
+      setDefaultRoute(getDefaultRouteForRole(role));
     };
 
     syncSections();
@@ -110,7 +118,7 @@ export function Sidebar() {
         <div className="flex h-full flex-col py-10 pl-[25px] pr-[7px]">
           <div className="relative pr-4.5">
             <Link
-              href={"/"}
+              href={defaultRoute}
               onClick={() => isMobile && toggleSidebar()}
               className="px-0 py-2.5 min-[850px]:py-0"
             >

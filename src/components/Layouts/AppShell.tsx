@@ -4,10 +4,12 @@ import { Sidebar } from "@/components/Layouts/sidebar";
 import { Header } from "@/components/Layouts/header";
 import {
   CURRENT_USER_STORAGE_KEY,
+  type CurrentUser,
   getCurrentUser,
 } from "@/services/authService";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState, type PropsWithChildren } from "react";
+import { useEffect, useMemo, useState, type PropsWithChildren } from "react";
+import { getDefaultRouteForRole } from "./sidebar/data";
 
 const AUTH_ROUTE_PREFIXES = ["/login"];
 
@@ -16,15 +18,21 @@ export function AppShell({ children }: PropsWithChildren) {
   const router = useRouter();
   const [hydrated, setHydrated] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
   const isAuthRoute = pathname
     ? AUTH_ROUTE_PREFIXES.some((prefix) => pathname.startsWith(prefix))
     : false;
+
+  const defaultRoute = useMemo(() => {
+    return getDefaultRouteForRole(currentUser?.role ?? null);
+  }, [currentUser]);
 
   useEffect(() => {
     const user = getCurrentUser();
     const authenticated = Boolean(user);
 
     setIsAuthenticated(authenticated);
+    setCurrentUser(user);
     setHydrated(true);
 
     if (!authenticated && !isAuthRoute) {
@@ -32,10 +40,19 @@ export function AppShell({ children }: PropsWithChildren) {
       return;
     }
 
-    if (authenticated && isAuthRoute) {
-      router.replace("/");
+    if (!user) {
+      return;
     }
-  }, [isAuthRoute, pathname, router]);
+
+    if (isAuthRoute && pathname !== defaultRoute) {
+      router.replace(defaultRoute);
+      return;
+    }
+
+    if (pathname === "/" && pathname !== defaultRoute) {
+      router.replace(defaultRoute);
+    }
+  }, [defaultRoute, isAuthRoute, pathname, router]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -49,9 +66,26 @@ export function AppShell({ children }: PropsWithChildren) {
       const authenticated = Boolean(user);
 
       setIsAuthenticated(authenticated);
+      setCurrentUser(user);
 
       if (!authenticated && !isAuthRoute) {
         router.replace("/login");
+        return;
+      }
+
+      if (!user) {
+        return;
+      }
+
+      const nextDefaultRoute = getDefaultRouteForRole(user.role);
+
+      if (isAuthRoute && pathname !== nextDefaultRoute) {
+        router.replace(nextDefaultRoute);
+        return;
+      }
+
+      if (pathname === "/" && pathname !== nextDefaultRoute) {
+        router.replace(nextDefaultRoute);
       }
     };
 
@@ -60,7 +94,7 @@ export function AppShell({ children }: PropsWithChildren) {
     return () => {
       window.removeEventListener("storage", handleStorage);
     };
-  }, [isAuthRoute, router]);
+  }, [isAuthRoute, pathname, router]);
 
   if (isAuthRoute) {
     return <>{children}</>;

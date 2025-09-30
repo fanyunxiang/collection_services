@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { login, register } from "@/services/authService";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { getDefaultRouteForRole } from "@/components/Layouts/sidebar/data";
 
 type AuthFormMode = "login" | "register";
 
@@ -119,7 +120,11 @@ export default function AuthForm({ mode }: AuthFormProps) {
         });
 
         setLoginState(LOGIN_INITIAL_STATE);
-        router.replace("/");
+
+        const role = response.data?.role ?? null;
+        const nextRoute = getDefaultRouteForRole(role);
+
+        router.replace(nextRoute);
         return;
       }
 
