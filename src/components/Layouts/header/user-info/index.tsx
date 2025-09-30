@@ -6,18 +6,56 @@ import {
   DropdownContent,
   DropdownTrigger,
 } from "@/components/ui/dropdown";
+import {
+  CURRENT_USER_STORAGE_KEY,
+  getCurrentUser,
+  logout,
+  type CurrentUser,
+} from "@/services/authService";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
-import Link from "next/link";
-import { useState } from "react";
-import { LogOutIcon, SettingsIcon, UserIcon } from "./icons";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { LogOutIcon } from "./icons";
 
 export function UserInfo() {
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(
+    () => getCurrentUser(),
+  );
+
+  useEffect(() => {
+    setCurrentUser(getCurrentUser());
+  }, []);
+
+  useEffect(() => {
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key && event.key !== CURRENT_USER_STORAGE_KEY) {
+        return;
+      }
+
+      setCurrentUser(getCurrentUser());
+    };
+
+    window.addEventListener("storage", handleStorage);
+
+    return () => {
+      window.removeEventListener("storage", handleStorage);
+    };
+  }, []);
+
+  const displayName = currentUser?.username ?? "Guest";
+
+  const handleLogout = () => {
+    logout();
+    setCurrentUser(null);
+    setIsOpen(false);
+    router.replace("/login");
+  };
 
   const USER = {
-    name: "John Smith",
-    email: "johnson@nextadmin.com",
+    name: displayName,
     img: "/images/user/user-03.png",
   };
 
@@ -71,42 +109,18 @@ export function UserInfo() {
               {USER.name}
             </div>
 
-            <div className="leading-none text-gray-6">{USER.email}</div>
+            <div className="leading-none text-gray-6">
+              {currentUser ? (currentUser.role === "admin" ? "Admin" : "User") : "Not signed in"}
+            </div>
           </figcaption>
         </figure>
-
-        <hr className="border-[#E8E8E8] dark:border-dark-3" />
-
-        <div className="p-2 text-base text-[#4B5563] dark:text-dark-6 [&>*]:cursor-pointer">
-          <Link
-            href={"/profile"}
-            onClick={() => setIsOpen(false)}
-            className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-[9px] hover:bg-gray-2 hover:text-dark dark:hover:bg-dark-3 dark:hover:text-white"
-          >
-            <UserIcon />
-
-            <span className="mr-auto text-base font-medium">View profile</span>
-          </Link>
-
-          <Link
-            href={"/pages/settings"}
-            onClick={() => setIsOpen(false)}
-            className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-[9px] hover:bg-gray-2 hover:text-dark dark:hover:bg-dark-3 dark:hover:text-white"
-          >
-            <SettingsIcon />
-
-            <span className="mr-auto text-base font-medium">
-              Account Settings
-            </span>
-          </Link>
-        </div>
 
         <hr className="border-[#E8E8E8] dark:border-dark-3" />
 
         <div className="p-2 text-base text-[#4B5563] dark:text-dark-6">
           <button
             className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-[9px] hover:bg-gray-2 hover:text-dark dark:hover:bg-dark-3 dark:hover:text-white"
-            onClick={() => setIsOpen(false)}
+            onClick={handleLogout}
           >
             <LogOutIcon />
 
