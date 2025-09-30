@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { registerUser, RegistrationDisabledError } from '@/backend/services/userService';
+import { registerUser, UserAlreadyExistsError } from '@/backend/services/userService';
 
 export async function POST(request: Request) {
   try {
@@ -9,8 +9,8 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ user }, { status: 201 });
   } catch (error: unknown) {
-    if (error instanceof RegistrationDisabledError) {
-      return NextResponse.json({ error: error.message }, { status: 503 });
+    if (error instanceof UserAlreadyExistsError) {
+      return NextResponse.json({ error: error.message }, { status: 409 });
     }
 
     console.error('Failed to register user', error);

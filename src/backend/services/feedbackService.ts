@@ -1,9 +1,10 @@
-import { getSupabaseAdminClient } from '../lib/supabaseClient';
+import {
+  listFeedbackSubmissionsByUser,
+} from '@/backend/data/localDatabase';
 import type {
-  Database,
-  FeedbackSubmissionRow,
+  FeedbackSubmissionHistoryItem,
   FeedbackSubmissionStatus,
-} from '../types/supabase';
+} from '@/backend/types/feedback';
 
 export class FeedbackServiceUnavailableError extends Error {
   constructor(message = 'Feedback submissions are temporarily unavailable.') {
@@ -23,21 +24,6 @@ export interface GetSubmissionHistoryParams {
   userId: string;
   statuses?: FeedbackSubmissionStatus[];
 }
-
-export type FeedbackSubmissionHistoryItem = Pick<
-  FeedbackSubmissionRow,
-  |
-    'id'
-    | 'user_id'
-    | 'service_type'
-    | 'status'
-    | 'details'
-    | 'submitted_at'
-    | 'updated_at'
-    | 'approved_at'
-    | 'approved_by'
-    | 'admin_comment'
->;
 
 const DEFAULT_EXCLUDED_STATUSES: FeedbackSubmissionStatus[] = ['draft'];
 
@@ -80,50 +66,19 @@ export async function getFeedbackSubmissionHistory({
   userId,
   statuses,
 }: GetSubmissionHistoryParams): Promise<FeedbackSubmissionHistoryItem[]> {
-  const supabase = getSupabaseAdminClient<Database>();
-
-  if (!supabase) {
-    throw new FeedbackServiceUnavailableError();
-  }
-
   const statusFilter = sanitiseStatuses(statuses);
 
-  const { data, error } = await supabase
-    .from('feedback_submissions')
-    .select(
-      `
-      id,
-      user_id,
-      service_type,
-      status,
-      details,
-      submitted_at,
-      updated_at,
-      approved_at,
-      approved_by,
-      admin_comment
-    `,
-    )
-    .eq('user_id', userId)
-    .order('updated_at', { ascending: false });
+  const submissions = listFeedbackSubmissionsByUser(userId, statusFilter);
 
-  if (error) {
-    throw new FeedbackServiceError(`Failed to fetch submission history: ${error.message}`);
-  }
-
-  if (!data) {
+  if (!submissions.length) {
     return [];
   }
 
-  const filtered = data.filter((submission) => {
-    const status = submission.status as FeedbackSubmissionStatus;
+  if (statusFilter?.length) {
+    return submissions;
+  }
 
-    if (statusFilter?.length) {
-      return statusFilter.includes(status);
-    }
-
-    return !DEFAULT_EXCLUDED_STATUSES.includes(status);
-  });
-
-  return filtered;
+  return submissions.filter(
+    (submission) => !DEFAULT_EXCLUDED_STATUSES.includes(submission.status),
+  );
 }

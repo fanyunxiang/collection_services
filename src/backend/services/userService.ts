@@ -1,10 +1,12 @@
-import type { User } from '@supabase/supabase-js';
-import { getSupabaseAdminClient } from '../lib/supabaseClient';
+import {
+  createUser,
+  findUserByEmail,
+} from '@/backend/data/localDatabase';
 
-export class RegistrationDisabledError extends Error {
-  constructor(message = 'User registration is disabled until SUPABASE_SERVICE_ROLE_KEY is configured.') {
+export class UserAlreadyExistsError extends Error {
+  constructor(message = 'A user with this email already exists.') {
     super(message);
-    this.name = 'RegistrationDisabledError';
+    this.name = 'UserAlreadyExistsError';
   }
 }
 
@@ -14,23 +16,28 @@ export interface RegisterUserParams {
   metadata?: Record<string, unknown>;
 }
 
-export async function registerUser({ email, password, metadata }: RegisterUserParams): Promise<User | null> {
-  const supabaseAdmin = getSupabaseAdminClient();
+export interface RegisteredUser {
+  id: string;
+  email: string;
+  created_at: string;
+  user_metadata?: Record<string, unknown>;
+}
 
-  if (!supabaseAdmin) {
-    throw new RegistrationDisabledError();
+export async function registerUser({
+  email,
+  password,
+  metadata,
+}: RegisterUserParams): Promise<RegisteredUser> {
+  if (findUserByEmail(email)) {
+    throw new UserAlreadyExistsError();
   }
 
-  const { data, error } = await supabaseAdmin.auth.admin.createUser({
-    email,
-    password,
-    email_confirm: true,
-    ...(metadata ? { user_metadata: metadata } : {}),
-  });
+  const user = createUser({ email, password, metadata });
 
-  if (error) {
-    throw new Error(`Failed to register user: ${error.message}`);
-  }
-
-  return data.user ?? null;
+  return {
+    id: user.id,
+    email: user.email,
+    created_at: user.created_at,
+    user_metadata: user.metadata,
+  };
 }

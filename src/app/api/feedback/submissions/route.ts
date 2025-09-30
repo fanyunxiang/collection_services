@@ -4,7 +4,7 @@ import {
   FeedbackServiceUnavailableError,
   getFeedbackSubmissionHistory,
 } from '@/backend/services/feedbackService';
-import type { FeedbackSubmissionStatus } from '@/backend/types/supabase';
+import type { FeedbackSubmissionStatus } from '@/backend/types/feedback';
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
