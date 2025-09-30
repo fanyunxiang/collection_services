@@ -1,3 +1,5 @@
+"use client";
+
 import { createApprovalPage } from "../_components/createApprovalPage";
 
 const FeedbackApprovalPage = createApprovalPage({
@@ -40,6 +42,45 @@ const FeedbackApprovalPage = createApprovalPage({
       ),
     },
   ],
+  renderDetails: (submission) => (
+    <div className="grid gap-4 md:grid-cols-2">
+      <div className="space-y-1">
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Feedback details</h3>
+        <p className="text-sm text-gray-700 dark:text-gray-300">{submission.payload.details}</p>
+      </div>
+      <div className="space-y-1">
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Subject</h3>
+        <p className="text-sm text-gray-700 dark:text-gray-300">{submission.payload.subject}</p>
+      </div>
+      {submission.payload.contactMethod ? (
+        <div className="space-y-1">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Preferred contact</h3>
+          <p className="text-sm text-gray-700 dark:text-gray-300">{submission.payload.contactMethod}</p>
+        </div>
+      ) : null}
+      <div className="space-y-1">
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Submitted</h3>
+        <p className="text-sm text-gray-700 dark:text-gray-300">
+          {new Date(submission.createdAt).toLocaleString()}
+        </p>
+      </div>
+      <div className="space-y-1">
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Status</h3>
+        <p className="text-sm capitalize text-gray-700 dark:text-gray-300">{submission.status}</p>
+      </div>
+      {submission.decisionBy ? (
+        <div className="space-y-1">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Reviewed by</h3>
+          <p className="text-sm text-gray-700 dark:text-gray-300">
+            {submission.decisionBy}
+            {submission.decidedAt
+              ? ` · ${new Date(submission.decidedAt).toLocaleString()}`
+              : ""}
+          </p>
+        </div>
+      ) : null}
+    </div>
+  ),
 });
 
 export default FeedbackApprovalPage;

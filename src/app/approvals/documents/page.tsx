@@ -1,3 +1,5 @@
+"use client";
+
 import { createApprovalPage } from "../_components/createApprovalPage";
 
 const DocumentApprovalPage = createApprovalPage({
@@ -43,6 +45,49 @@ const DocumentApprovalPage = createApprovalPage({
       ),
     },
   ],
+  renderDetails: (submission) => (
+    <div className="grid gap-4 md:grid-cols-2">
+      <div className="space-y-1">
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Document</h3>
+        <p className="text-sm text-gray-700 dark:text-gray-300">{submission.payload.documentType}</p>
+      </div>
+      <div className="space-y-1">
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Needed by</h3>
+        <p className="text-sm text-gray-700 dark:text-gray-300">
+          {submission.payload.requiredBy
+            ? new Date(`${submission.payload.requiredBy}T00:00`).toLocaleDateString()
+            : "Not specified"}
+        </p>
+      </div>
+      <div className="space-y-1 md:col-span-2">
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Justification</h3>
+        <p className="text-sm text-gray-700 dark:text-gray-300">{submission.payload.justification}</p>
+      </div>
+      <div className="space-y-1">
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Requested by</h3>
+        <p className="text-sm text-gray-700 dark:text-gray-300">{submission.submittedBy}</p>
+      </div>
+      <div className="space-y-1">
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Submitted</h3>
+        <p className="text-sm text-gray-700 dark:text-gray-300">{new Date(submission.createdAt).toLocaleString()}</p>
+      </div>
+      <div className="space-y-1">
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Status</h3>
+        <p className="text-sm capitalize text-gray-700 dark:text-gray-300">{submission.status}</p>
+      </div>
+      {submission.decisionBy ? (
+        <div className="space-y-1">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Reviewed by</h3>
+          <p className="text-sm text-gray-700 dark:text-gray-300">
+            {submission.decisionBy}
+            {submission.decidedAt
+              ? ` · ${new Date(submission.decidedAt).toLocaleString()}`
+              : ""}
+          </p>
+        </div>
+      ) : null}
+    </div>
+  ),
 });
 
 export default DocumentApprovalPage;

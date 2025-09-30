@@ -53,7 +53,7 @@ export function Sidebar() {
         });
       });
     });
-  }, [pathname, sections]);
+  }, [expandedItems, pathname, sections]);
 
   useEffect(() => {
     const syncSections = () => {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { Fragment, useEffect, useRef, useState, type ReactNode } from "react";
 import { getCurrentUser } from "@/services/authService";
 import type { CurrentUser } from "@/services/authService";
 import {
@@ -25,6 +25,7 @@ type ApprovalPageConfig<T extends SubmissionType> = {
   description: string;
   emptyLabel: string;
   columns: ColumnConfig<T>[];
+  renderDetails?: (submission: SubmissionRecord<T>) => ReactNode;
 };
 
 function isBrowser(): boolean {
@@ -37,19 +38,18 @@ export function createApprovalPage<T extends SubmissionType>({
   description,
   columns,
   emptyLabel,
+  renderDetails,
 }: ApprovalPageConfig<T>) {
   return function SubmissionApprovalPage() {
     const [currentUser, setCurrentUser] = useState<CurrentUser | null>(() => getCurrentUser());
     const [submissions, setSubmissions] = useState<SubmissionRecord<T>[]>([]);
     const [error, setError] = useState<string | null>(null);
-
-    const loadSubmissions = useCallback(() => {
-      setSubmissions(listSubmissions(type));
-    }, [type]);
+    const [expandedSubmissionId, setExpandedSubmissionId] = useState<string | null>(null);
+    const submissionType = useRef(type);
 
     useEffect(() => {
-      loadSubmissions();
-    }, [loadSubmissions]);
+      setSubmissions(listSubmissions(submissionType.current));
+    }, []);
 
     useEffect(() => {
       if (!isBrowser()) {
@@ -62,8 +62,8 @@ export function createApprovalPage<T extends SubmissionType>({
           return;
         }
 
-        if (!event.key || event.key.endsWith(`${type}-submissions`)) {
-          loadSubmissions();
+        if (!event.key || event.key.endsWith(`${submissionType.current}-submissions`)) {
+          setSubmissions(listSubmissions(submissionType.current));
         }
       };
 
@@ -72,18 +72,24 @@ export function createApprovalPage<T extends SubmissionType>({
       return () => {
         window.removeEventListener("storage", handleStorage);
       };
-    }, [loadSubmissions, type]);
+    }, []);
 
     const handleDecision = (submissionId: string, decision: DecisionStatus) => {
       setError(null);
 
       try {
-        const updatedSubmission = updateSubmissionStatus(type, submissionId, decision, currentUser);
+        const updatedSubmission = updateSubmissionStatus(
+          submissionType.current,
+          submissionId,
+          decision,
+          currentUser,
+        );
         setSubmissions((prev) =>
           prev.map((submission) =>
             submission.id === submissionId ? updatedSubmission : submission,
           ),
         );
+        setExpandedSubmissionId(null);
       } catch (decisionError) {
         if (decisionError instanceof Error) {
           setError(decisionError.message);
@@ -91,6 +97,10 @@ export function createApprovalPage<T extends SubmissionType>({
           setError("Failed to update the submission status.");
         }
       }
+    };
+
+    const toggleDetails = (submissionId: string) => {
+      setExpandedSubmissionId((current) => (current === submissionId ? null : submissionId));
     };
 
     if (!currentUser || currentUser.role !== "admin") {
@@ -147,40 +157,67 @@ export function createApprovalPage<T extends SubmissionType>({
                   </tr>
                 ) : (
                   submissions.map((submission) => (
-                    <tr key={submission.id} className="bg-white dark:bg-gray-950">
-                      {columns.map((column) => (
-                        <td
-                          key={`${submission.id}-${column.header}`}
-                          className={`px-4 py-3 text-sm text-gray-900 dark:text-gray-100 ${column.className ?? ""}`.trim()}
-                        >
-                          {column.render(submission)}
-                        </td>
-                      ))}
-                      <td className="px-4 py-3">
-                        {submission.status === "pending" ? (
+                    <Fragment key={submission.id}>
+                      <tr className="bg-white dark:bg-gray-950">
+                        {columns.map((column) => (
+                          <td
+                            key={`${submission.id}-${column.header}`}
+                            className={`px-4 py-3 text-sm text-gray-900 dark:text-gray-100 ${column.className ?? ""}`.trim()}
+                          >
+                            {column.render(submission)}
+                          </td>
+                        ))}
+                        <td className="px-4 py-3">
                           <div className="flex flex-wrap gap-2">
                             <button
                               type="button"
-                              onClick={() => handleDecision(submission.id, "approved")}
-                              className="inline-flex items-center rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+                              onClick={() => toggleDetails(submission.id)}
+                              className="inline-flex items-center rounded-md border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-700 shadow-sm transition hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:border-gray-700 dark:text-gray-100 dark:hover:bg-gray-800"
                             >
-                              Approve
+                              {expandedSubmissionId === submission.id ? "Hide details" : "View details"}
                             </button>
-                            <button
-                              type="button"
-                              onClick={() => handleDecision(submission.id, "rejected")}
-                              className="inline-flex items-center rounded-md bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2"
-                            >
-                              Reject
-                            </button>
+                            {submission.status === "pending" ? (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDecision(submission.id, "approved")}
+                                  className="inline-flex items-center rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+                                >
+                                  Approve
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDecision(submission.id, "rejected")}
+                                  className="inline-flex items-center rounded-md bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2"
+                                >
+                                  Reject
+                                </button>
+                              </>
+                            ) : (
+                              <span className="inline-flex items-center rounded-md bg-gray-100 px-3 py-1 text-xs font-medium capitalize text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+                                {submission.status}
+                              </span>
+                            )}
                           </div>
-                        ) : (
-                          <span className="inline-flex items-center rounded-md bg-gray-100 px-3 py-1 text-xs font-medium capitalize text-gray-600 dark:bg-gray-800 dark:text-gray-300">
-                            {submission.status}
-                          </span>
-                        )}
-                      </td>
-                    </tr>
+                        </td>
+                      </tr>
+                      {expandedSubmissionId === submission.id && (
+                        <tr>
+                          <td
+                            colSpan={columns.length + 1}
+                            className="bg-gray-50 px-4 py-5 text-sm text-gray-700 dark:bg-gray-900/60 dark:text-gray-200"
+                          >
+                            {renderDetails ? (
+                              renderDetails(submission)
+                            ) : (
+                              <pre className="whitespace-pre-wrap break-words text-xs">
+                                {JSON.stringify(submission.payload, null, 2)}
+                              </pre>
+                            )}
+                          </td>
+                        </tr>
+                      )}
+                    </Fragment>
                   ))
                 )}
               </tbody>
