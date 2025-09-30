@@ -1,105 +1,115 @@
+import type { PropsType as IconProps } from "../icons";
 import * as Icons from "../icons";
 
-export const NAV_DATA = [
+export type SidebarSubItem = {
+  title: string;
+  url: string;
+};
+
+export type SidebarItem = {
+  title: string;
+  icon: (props: IconProps) => JSX.Element;
+  url?: string;
+  items: SidebarSubItem[];
+};
+
+export type SidebarSection = {
+  label: string;
+  items: SidebarItem[];
+};
+
+function findFirstUrl(sections: SidebarSection[]): string | null {
+  for (const section of sections) {
+    for (const item of section.items) {
+      if (item.url) {
+        return item.url;
+      }
+
+      const nestedUrl = item.items.find((subItem) => subItem.url)?.url;
+
+      if (nestedUrl) {
+        return nestedUrl;
+      }
+    }
+  }
+
+  return null;
+}
+
+const USER_SECTIONS: SidebarSection[] = [
   {
-    label: "MAIN MENU",
+    label: "SERVICES",
     items: [
       {
-        title: "Dashboard",
-        icon: Icons.HomeIcon,
-        items: [
-          {
-            title: "eCommerce",
-            url: "/",
-          },
-        ],
-      },
-      {
-        title: "Calendar",
-        url: "/calendar",
-        icon: Icons.Calendar,
-        items: [],
-      },
-      {
-        title: "Profile",
-        url: "/profile",
-        icon: Icons.User,
-        items: [],
-      },
-      {
-        title: "Forms",
-        icon: Icons.Alphabet,
-        items: [
-          {
-            title: "Form Elements",
-            url: "/forms/form-elements",
-          },
-          {
-            title: "Form Layout",
-            url: "/forms/form-layout",
-          },
-        ],
-      },
-      {
-        title: "Tables",
-        url: "/tables",
-        icon: Icons.Table,
-        items: [
-          {
-            title: "Tables",
-            url: "/tables",
-          },
-        ],
-      },
-      {
-        title: "Pages",
-        icon: Icons.Alphabet,
-        items: [
-          {
-            title: "Settings",
-            url: "/pages/settings",
-          },
-        ],
-      },
-    ],
-  },
-  {
-    label: "OTHERS",
-    items: [
-      {
-        title: "Charts",
-        icon: Icons.PieChart,
-        items: [
-          {
-            title: "Basic Chart",
-            url: "/charts/basic-chart",
-          },
-        ],
-      },
-      {
-        title: "UI Elements",
+        title: "Feedback Service",
         icon: Icons.FourCircle,
-        items: [
-          {
-            title: "Alerts",
-            url: "/ui-elements/alerts",
-          },
-          {
-            title: "Buttons",
-            url: "/ui-elements/buttons",
-          },
-        ],
+        url: "/feedback",
+        items: [],
       },
       {
-        title: "Authentication",
-        icon: Icons.Authentication,
-        items: [
-          {
-            title: "Sign In",
-            url: "/auth/sign-in",
-          },
-        ],
+        title: "Booking Service",
+        icon: Icons.Calendar,
+        url: "/booking",
+        items: [],
+      },
+      {
+        title: "Document Request Service",
+        icon: Icons.Table,
+        url: "/documents",
+        items: [],
       },
     ],
   },
 ];
+
+const ADMIN_SECTIONS: SidebarSection[] = [
+  {
+    label: "APPROVALS",
+    items: [
+      {
+        title: "Feedback Service Approvals",
+        icon: Icons.FourCircle,
+        url: "/approvals/feedback",
+        items: [],
+      },
+      {
+        title: "Booking Service Approvals",
+        icon: Icons.Calendar,
+        url: "/approvals/booking",
+        items: [],
+      },
+      {
+        title: "Document Service Approvals",
+        icon: Icons.Table,
+        url: "/approvals/documents",
+        items: [],
+      },
+    ],
+  },
+];
+
+export function buildSidebarSections(role: "admin" | "user" | null): SidebarSection[] {
+  if (role === "admin") {
+    return ADMIN_SECTIONS;
+  }
+
+  if (role === "user") {
+    return USER_SECTIONS;
+  }
+
+  return [];
+}
+
+export function getDefaultRouteForRole(
+  role: "admin" | "user" | null,
+): string {
+  if (role === "admin") {
+    return findFirstUrl(ADMIN_SECTIONS) ?? "/";
+  }
+
+  if (role === "user") {
+    return findFirstUrl(USER_SECTIONS) ?? "/";
+  }
+
+  return "/";
+}

@@ -4,8 +4,13 @@ import { Logo } from "@/components/logo";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
-import { NAV_DATA } from "./data";
+import { useEffect, useMemo, useState } from "react";
+import { CURRENT_USER_STORAGE_KEY, getCurrentUser } from "@/services/authService";
+import {
+  buildSidebarSections,
+  getDefaultRouteForRole,
+  type SidebarSection,
+} from "./data";
 import { ArrowLeftIcon, ChevronUp } from "./icons";
 import { MenuItem } from "./menu-item";
 import { useSidebarContext } from "./sidebar-context";
@@ -14,19 +19,30 @@ export function Sidebar() {
   const pathname = usePathname();
   const { setIsOpen, isOpen, isMobile, toggleSidebar } = useSidebarContext();
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
+  const [sections, setSections] = useState<SidebarSection[]>(() => {
+    const currentUser = getCurrentUser();
+    return buildSidebarSections(currentUser?.role ?? null);
+  });
+  const [defaultRoute, setDefaultRoute] = useState<string>(() => {
+    const currentUser = getCurrentUser();
+    return getDefaultRouteForRole(currentUser?.role ?? null);
+  });
+
+  const storageKeys = useMemo(() => {
+    return [CURRENT_USER_STORAGE_KEY];
+  }, []);
 
   const toggleExpanded = (title: string) => {
     setExpandedItems((prev) => (prev.includes(title) ? [] : [title]));
-
-    // Uncomment the following line to enable multiple expanded items
-    // setExpandedItems((prev) =>
-    //   prev.includes(title) ? prev.filter((t) => t !== title) : [...prev, title],
-    // );
   };
 
   useEffect(() => {
-    // Keep collapsible open, when it's subpage is active
-    NAV_DATA.some((section) => {
+    setExpandedItems([]);
+  }, [sections]);
+
+  useEffect(() => {
+    // Keep collapsible open when subpage is active
+    sections.some((section) => {
       return section.items.some((item) => {
         return item.items.some((subItem) => {
           if (subItem.url === pathname) {
@@ -37,10 +53,46 @@ export function Sidebar() {
             // Break the loop
             return true;
           }
+
+          return false;
         });
       });
     });
-  }, [pathname]);
+  }, [expandedItems, pathname, sections]);
+
+  useEffect(() => {
+    const syncSections = () => {
+      const currentUser = getCurrentUser();
+      const role = currentUser?.role ?? null;
+
+      setSections(buildSidebarSections(role));
+      setDefaultRoute(getDefaultRouteForRole(role));
+    };
+
+    syncSections();
+
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key && !storageKeys.includes(event.key)) {
+        return;
+      }
+
+      syncSections();
+    };
+
+    window.addEventListener("storage", handleStorage);
+
+    return () => {
+      window.removeEventListener("storage", handleStorage);
+    };
+  }, [storageKeys]);
+
+  if (!sections.length) {
+    return null;
+  }
 
   return (
     <>
@@ -66,7 +118,7 @@ export function Sidebar() {
         <div className="flex h-full flex-col py-10 pl-[25px] pr-[7px]">
           <div className="relative pr-4.5">
             <Link
-              href={"/"}
+              href={defaultRoute}
               onClick={() => isMobile && toggleSidebar()}
               className="px-0 py-2.5 min-[850px]:py-0"
             >
@@ -87,7 +139,7 @@ export function Sidebar() {
 
           {/* Navigation */}
           <div className="custom-scrollbar mt-6 flex-1 overflow-y-auto pr-3 min-[850px]:mt-10">
-            {NAV_DATA.map((section) => (
+            {sections.map((section) => (
               <div key={section.label} className="mb-6">
                 <h2 className="mb-5 text-sm font-medium text-dark-4 dark:text-dark-6">
                   {section.label}
@@ -115,8 +167,7 @@ export function Sidebar() {
                               <ChevronUp
                                 className={cn(
                                   "ml-auto rotate-180 transition-transform duration-200",
-                                  expandedItems.includes(item.title) &&
-                                    "rotate-0",
+                                  expandedItems.includes(item.title) && "rotate-0",
                                 )}
                                 aria-hidden="true"
                               />
@@ -143,11 +194,7 @@ export function Sidebar() {
                           </div>
                         ) : (
                           (() => {
-                            const href =
-                              "url" in item
-                                ? item.url + ""
-                                : "/" +
-                                  item.title.toLowerCase().split(" ").join("-");
+                            const href = item.url ?? "/";
 
                             return (
                               <MenuItem
