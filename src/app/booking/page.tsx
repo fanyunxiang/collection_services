@@ -1,101 +1,96 @@
 "use client";
 
-import { useEffect, useMemo, useState, type FormEvent } from "react";
-import type { CurrentUser } from "@/services/authService";
-import { getCurrentUser } from "@/services/authService";
 import {
-  createSubmission,
-  listSubmissionsForUser,
-  type BookingPayload,
-  type SubmissionRecord,
-} from "@/services/submissionService";
+  useCallback,
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+} from "react";
+import { useUserSubmissions } from "@/hooks/useUserSubmissions";
+import { createSubmission, type BookingPayload } from "@/services/submissionService";
 
 export default function BookingPage() {
-  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(() => getCurrentUser());
+  const { currentUser, submissions, refreshSubmissions } =
+    useUserSubmissions("booking");
   const [serviceName, setServiceName] = useState("");
   const [preferredDate, setPreferredDate] = useState("");
   const [preferredTime, setPreferredTime] = useState("");
   const [notes, setNotes] = useState("");
-  const [submissions, setSubmissions] = useState<SubmissionRecord<"booking">[]>([]);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const username = useMemo(() => currentUser?.username ?? "", [currentUser]);
+  const handleServiceNameChange = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      setServiceName(event.target.value);
+    },
+    [],
+  );
 
-  useEffect(() => {
-    if (!username) {
-      setSubmissions([]);
-      return;
-    }
+  const handlePreferredDateChange = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      setPreferredDate(event.target.value);
+    },
+    [],
+  );
 
-    setSubmissions(listSubmissionsForUser("booking", username));
-  }, [username]);
+  const handlePreferredTimeChange = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      setPreferredTime(event.target.value);
+    },
+    [],
+  );
 
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
+  const handleNotesChange = useCallback(
+    (event: ChangeEvent<HTMLTextAreaElement>) => {
+      setNotes(event.target.value);
+    },
+    [],
+  );
 
-    const handleStorage = (event: StorageEvent) => {
-      if (event.key === "collection-services.current-user") {
-        setCurrentUser(getCurrentUser());
-      }
+  const handleSubmit = useCallback(
+    (event: FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      setMessage(null);
+      setError(null);
 
-      if (!event.key || event.key === "collection-services.booking-submissions") {
-        if (username) {
-          setSubmissions(listSubmissionsForUser("booking", username));
+      try {
+        const payload: BookingPayload = {
+          serviceName: serviceName.trim(),
+          preferredDate,
+          preferredTime,
+          notes: notes.trim() || undefined,
+        };
+
+        if (!payload.serviceName) {
+          throw new Error("Service name is required.");
+        }
+
+        if (!payload.preferredDate) {
+          throw new Error("Preferred date is required.");
+        }
+
+        if (!payload.preferredTime) {
+          throw new Error("Preferred time is required.");
+        }
+
+        createSubmission("booking", payload, currentUser);
+        refreshSubmissions();
+
+        setServiceName("");
+        setPreferredDate("");
+        setPreferredTime("");
+        setNotes("");
+        setMessage("Booking request submitted successfully.");
+      } catch (submissionError) {
+        if (submissionError instanceof Error) {
+          setError(submissionError.message);
+        } else {
+          setError("An unexpected error occurred while creating the booking request.");
         }
       }
-    };
-
-    window.addEventListener("storage", handleStorage);
-
-    return () => {
-      window.removeEventListener("storage", handleStorage);
-    };
-  }, [username]);
-
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setMessage(null);
-    setError(null);
-
-    try {
-      const payload: BookingPayload = {
-        serviceName: serviceName.trim(),
-        preferredDate,
-        preferredTime,
-        notes: notes.trim() || undefined,
-      };
-
-      if (!payload.serviceName) {
-        throw new Error("Service name is required.");
-      }
-
-      if (!payload.preferredDate) {
-        throw new Error("Preferred date is required.");
-      }
-
-      if (!payload.preferredTime) {
-        throw new Error("Preferred time is required.");
-      }
-
-      const newSubmission = createSubmission("booking", payload, currentUser);
-      setSubmissions((prev) => [...prev, newSubmission]);
-
-      setServiceName("");
-      setPreferredDate("");
-      setPreferredTime("");
-      setNotes("");
-      setMessage("Booking request submitted successfully.");
-    } catch (submissionError) {
-      if (submissionError instanceof Error) {
-        setError(submissionError.message);
-      } else {
-        setError("An unexpected error occurred while creating the booking request.");
-      }
-    }
-  };
+    },
+    [currentUser, notes, preferredDate, preferredTime, refreshSubmissions, serviceName],
+  );
 
   if (!currentUser) {
     return (
@@ -139,7 +134,7 @@ export default function BookingPage() {
               id="serviceName"
               name="serviceName"
               value={serviceName}
-              onChange={(event) => setServiceName(event.target.value)}
+              onChange={handleServiceNameChange}
               className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100"
               placeholder="Consultation, onboarding, etc."
               required
@@ -156,7 +151,7 @@ export default function BookingPage() {
                 id="preferredDate"
                 name="preferredDate"
                 value={preferredDate}
-                onChange={(event) => setPreferredDate(event.target.value)}
+                onChange={handlePreferredDateChange}
                 className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100"
                 required
               />
@@ -171,7 +166,7 @@ export default function BookingPage() {
                 id="preferredTime"
                 name="preferredTime"
                 value={preferredTime}
-                onChange={(event) => setPreferredTime(event.target.value)}
+                onChange={handlePreferredTimeChange}
                 className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100"
                 required
               />
@@ -186,7 +181,7 @@ export default function BookingPage() {
               id="notes"
               name="notes"
               value={notes}
-              onChange={(event) => setNotes(event.target.value)}
+              onChange={handleNotesChange}
               className="h-24 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100"
               placeholder="Share any important context for the appointment"
             />

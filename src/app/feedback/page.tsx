@@ -1,97 +1,82 @@
 "use client";
 
-import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { getCurrentUser } from "@/services/authService";
-import type { CurrentUser } from "@/services/authService";
 import {
-  createSubmission,
-  listSubmissionsForUser,
-  type FeedbackPayload,
-  type SubmissionRecord,
-} from "@/services/submissionService";
+  useCallback,
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+} from "react";
+import { useUserSubmissions } from "@/hooks/useUserSubmissions";
+import { createSubmission, type FeedbackPayload } from "@/services/submissionService";
 
 export default function FeedbackPage() {
-  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(() => getCurrentUser());
+  const { currentUser, submissions, refreshSubmissions } =
+    useUserSubmissions("feedback");
   const [subject, setSubject] = useState("");
   const [details, setDetails] = useState("");
   const [contactMethod, setContactMethod] = useState("");
-  const [submissions, setSubmissions] = useState<SubmissionRecord<"feedback">[]>([]);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const username = useMemo(() => currentUser?.username ?? "", [currentUser]);
+  const handleSubjectChange = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      setSubject(event.target.value);
+    },
+    [],
+  );
 
-  useEffect(() => {
-    if (!username) {
-      setSubmissions([]);
-      return;
-    }
+  const handleDetailsChange = useCallback(
+    (event: ChangeEvent<HTMLTextAreaElement>) => {
+      setDetails(event.target.value);
+    },
+    [],
+  );
 
-    setSubmissions(listSubmissionsForUser("feedback", username));
-  }, [username]);
+  const handleContactMethodChange = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      setContactMethod(event.target.value);
+    },
+    [],
+  );
 
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
+  const handleSubmit = useCallback(
+    (event: FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      setMessage(null);
+      setError(null);
 
-    const handleStorage = (event: StorageEvent) => {
-      if (event.key === "collection-services.current-user") {
-        setCurrentUser(getCurrentUser());
-      }
+      try {
+        const payload: FeedbackPayload = {
+          subject: subject.trim(),
+          details: details.trim(),
+          contactMethod: contactMethod.trim() || undefined,
+        };
 
-      if (
-        !event.key ||
-        event.key === "collection-services.feedback-submissions"
-      ) {
-        if (username) {
-          setSubmissions(listSubmissionsForUser("feedback", username));
+        if (!payload.subject) {
+          throw new Error("Subject is required.");
+        }
+
+        if (!payload.details) {
+          throw new Error("Details are required.");
+        }
+
+        createSubmission("feedback", payload, currentUser);
+        refreshSubmissions();
+
+        setSubject("");
+        setDetails("");
+        setContactMethod("");
+        setMessage("Feedback submitted successfully.");
+      } catch (submissionError) {
+        if (submissionError instanceof Error) {
+          setError(submissionError.message);
+        } else {
+          setError("An unexpected error occurred while submitting feedback.");
         }
       }
-    };
-
-    window.addEventListener("storage", handleStorage);
-
-    return () => {
-      window.removeEventListener("storage", handleStorage);
-    };
-  }, [username]);
-
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setMessage(null);
-    setError(null);
-
-    try {
-      const payload: FeedbackPayload = {
-        subject: subject.trim(),
-        details: details.trim(),
-        contactMethod: contactMethod.trim() || undefined,
-      };
-
-      if (!payload.subject) {
-        throw new Error("Subject is required.");
-      }
-
-      if (!payload.details) {
-        throw new Error("Details are required.");
-      }
-
-      const newSubmission = createSubmission("feedback", payload, currentUser);
-      setSubmissions((prev) => [...prev, newSubmission]);
-
-      setSubject("");
-      setDetails("");
-      setContactMethod("");
-      setMessage("Feedback submitted successfully.");
-    } catch (submissionError) {
-      if (submissionError instanceof Error) {
-        setError(submissionError.message);
-      } else {
-        setError("An unexpected error occurred while submitting feedback.");
-      }
-    }
-  };
+    },
+    [contactMethod, currentUser, details, refreshSubmissions, subject],
+  );
 
   if (!currentUser) {
     return (
@@ -135,7 +120,7 @@ export default function FeedbackPage() {
               id="subject"
               name="subject"
               value={subject}
-              onChange={(event) => setSubject(event.target.value)}
+              onChange={handleSubjectChange}
               className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100"
               placeholder="Let us know how we can help"
               required
@@ -150,7 +135,7 @@ export default function FeedbackPage() {
               id="details"
               name="details"
               value={details}
-              onChange={(event) => setDetails(event.target.value)}
+              onChange={handleDetailsChange}
               className="h-32 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100"
               placeholder="Please provide as much detail as possible"
               required
@@ -165,7 +150,7 @@ export default function FeedbackPage() {
               id="contactMethod"
               name="contactMethod"
               value={contactMethod}
-              onChange={(event) => setContactMethod(event.target.value)}
+              onChange={handleContactMethodChange}
               className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100"
               placeholder="Email, phone number, or other"
             />
