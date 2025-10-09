@@ -1,94 +1,82 @@
 "use client";
 
-import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { getCurrentUser } from "@/services/authService";
-import type { CurrentUser } from "@/services/authService";
 import {
-  createSubmission,
-  listSubmissionsForUser,
-  type DocumentPayload,
-  type SubmissionRecord,
-} from "@/services/submissionService";
+  useCallback,
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+} from "react";
+import { useUserSubmissions } from "@/hooks/useUserSubmissions";
+import { createSubmission, type DocumentPayload } from "@/services/submissionService";
 
 export default function DocumentRequestPage() {
-  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(() => getCurrentUser());
+  const { currentUser, submissions, refreshSubmissions } =
+    useUserSubmissions("document");
   const [documentType, setDocumentType] = useState("");
   const [justification, setJustification] = useState("");
   const [requiredBy, setRequiredBy] = useState("");
-  const [submissions, setSubmissions] = useState<SubmissionRecord<"document">[]>([]);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const username = useMemo(() => currentUser?.username ?? "", [currentUser]);
+  const handleDocumentTypeChange = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      setDocumentType(event.target.value);
+    },
+    [],
+  );
 
-  useEffect(() => {
-    if (!username) {
-      setSubmissions([]);
-      return;
-    }
+  const handleJustificationChange = useCallback(
+    (event: ChangeEvent<HTMLTextAreaElement>) => {
+      setJustification(event.target.value);
+    },
+    [],
+  );
 
-    setSubmissions(listSubmissionsForUser("document", username));
-  }, [username]);
+  const handleRequiredByChange = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      setRequiredBy(event.target.value);
+    },
+    [],
+  );
 
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
+  const handleSubmit = useCallback(
+    (event: FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      setMessage(null);
+      setError(null);
 
-    const handleStorage = (event: StorageEvent) => {
-      if (event.key === "collection-services.current-user") {
-        setCurrentUser(getCurrentUser());
-      }
+      try {
+        const payload: DocumentPayload = {
+          documentType: documentType.trim(),
+          justification: justification.trim(),
+          requiredBy: requiredBy || undefined,
+        };
 
-      if (!event.key || event.key === "collection-services.document-submissions") {
-        if (username) {
-          setSubmissions(listSubmissionsForUser("document", username));
+        if (!payload.documentType) {
+          throw new Error("Document type is required.");
+        }
+
+        if (!payload.justification) {
+          throw new Error("Justification is required.");
+        }
+
+        createSubmission("document", payload, currentUser);
+        refreshSubmissions();
+
+        setDocumentType("");
+        setJustification("");
+        setRequiredBy("");
+        setMessage("Document request submitted successfully.");
+      } catch (submissionError) {
+        if (submissionError instanceof Error) {
+          setError(submissionError.message);
+        } else {
+          setError("An unexpected error occurred while submitting the document request.");
         }
       }
-    };
-
-    window.addEventListener("storage", handleStorage);
-
-    return () => {
-      window.removeEventListener("storage", handleStorage);
-    };
-  }, [username]);
-
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setMessage(null);
-    setError(null);
-
-    try {
-      const payload: DocumentPayload = {
-        documentType: documentType.trim(),
-        justification: justification.trim(),
-        requiredBy: requiredBy || undefined,
-      };
-
-      if (!payload.documentType) {
-        throw new Error("Document type is required.");
-      }
-
-      if (!payload.justification) {
-        throw new Error("Justification is required.");
-      }
-
-      const newSubmission = createSubmission("document", payload, currentUser);
-      setSubmissions((prev) => [...prev, newSubmission]);
-
-      setDocumentType("");
-      setJustification("");
-      setRequiredBy("");
-      setMessage("Document request submitted successfully.");
-    } catch (submissionError) {
-      if (submissionError instanceof Error) {
-        setError(submissionError.message);
-      } else {
-        setError("An unexpected error occurred while submitting the document request.");
-      }
-    }
-  };
+    },
+    [currentUser, documentType, justification, refreshSubmissions, requiredBy],
+  );
 
   if (!currentUser) {
     return (
@@ -132,7 +120,7 @@ export default function DocumentRequestPage() {
               id="documentType"
               name="documentType"
               value={documentType}
-              onChange={(event) => setDocumentType(event.target.value)}
+              onChange={handleDocumentTypeChange}
               className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100"
               placeholder="Enrollment letter, transcript, etc."
               required
@@ -147,7 +135,7 @@ export default function DocumentRequestPage() {
               id="justification"
               name="justification"
               value={justification}
-              onChange={(event) => setJustification(event.target.value)}
+              onChange={handleJustificationChange}
               className="h-28 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100"
               placeholder="Explain why you need this document"
               required
@@ -163,7 +151,7 @@ export default function DocumentRequestPage() {
               id="requiredBy"
               name="requiredBy"
               value={requiredBy}
-              onChange={(event) => setRequiredBy(event.target.value)}
+              onChange={handleRequiredByChange}
               className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100"
             />
           </div>
