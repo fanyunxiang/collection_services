@@ -2,21 +2,76 @@
 
 import {
   useCallback,
+  useEffect,
+  useMemo,
   useState,
   type ChangeEvent,
   type FormEvent,
 } from "react";
-import { useUserSubmissions } from "@/hooks/useUserSubmissions";
-import { createSubmission, type DocumentPayload } from "@/services/submissionService";
+import { getCurrentUser, type CurrentUser } from "@/services/authService";
+import {
+  createSubmission,
+  listSubmissionsForUser,
+  type DocumentPayload,
+  type SubmissionRecord,
+} from "@/services/submissionService";
 
 export default function DocumentRequestPage() {
-  const { currentUser, submissions, refreshSubmissions } =
-    useUserSubmissions("document");
+  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(() =>
+    getCurrentUser(),
+  );
+  const [submissions, setSubmissions] = useState<SubmissionRecord<"document">[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const [documentType, setDocumentType] = useState("");
   const [justification, setJustification] = useState("");
   const [requiredBy, setRequiredBy] = useState("");
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const username = useMemo(() => currentUser?.username ?? "", [currentUser]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const handleStorageChange = () => {
+      setCurrentUser(getCurrentUser());
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, []);
+
+  const refreshSubmissions = useCallback(async () => {
+    if (!username) {
+      setSubmissions([]);
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      setError(null);
+      const records = await listSubmissionsForUser("document", username);
+      setSubmissions(records);
+    } catch (submissionError) {
+      if (submissionError instanceof Error) {
+        setError(submissionError.message);
+      } else {
+        setError("Unable to load document history.");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  }, [username]);
+
+  useEffect(() => {
+    void refreshSubmissions();
+  }, [refreshSubmissions]);
 
   const handleDocumentTypeChange = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => {
@@ -40,7 +95,7 @@ export default function DocumentRequestPage() {
   );
 
   const handleSubmit = useCallback(
-    (event: FormEvent<HTMLFormElement>) => {
+    async (event: FormEvent<HTMLFormElement>) => {
       event.preventDefault();
       setMessage(null);
       setError(null);
@@ -60,18 +115,21 @@ export default function DocumentRequestPage() {
           throw new Error("Justification is required.");
         }
 
-        createSubmission("document", payload, currentUser);
-        refreshSubmissions();
+        const record = await createSubmission("document", payload, currentUser);
+        setSubmissions((previous) => [record, ...previous]);
 
         setDocumentType("");
         setJustification("");
         setRequiredBy("");
         setMessage("Document request submitted successfully.");
+        void refreshSubmissions();
       } catch (submissionError) {
         if (submissionError instanceof Error) {
           setError(submissionError.message);
         } else {
-          setError("An unexpected error occurred while submitting the document request.");
+          setError(
+            "An unexpected error occurred while submitting the document request.",
+          );
         }
       }
     },
@@ -176,14 +234,27 @@ export default function DocumentRequestPage() {
             <thead className="bg-gray-50 dark:bg-gray-800">
               <tr>
                 <th className="px-4 py-2 text-left font-medium text-gray-700 dark:text-gray-200">Document</th>
-                <th className="px-4 py-2 text-left font-medium text-gray-700 dark:text-gray-200">Requested</th>
                 <th className="px-4 py-2 text-left font-medium text-gray-700 dark:text-gray-200">Status</th>
+                <th className="px-4 py-2 text-left font-medium text-gray-700 dark:text-gray-200">Required by</th>
+                <th className="px-4 py-2 text-left font-medium text-gray-700 dark:text-gray-200">Submitted at</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
-              {submissions.length === 0 ? (
+              {isLoading ? (
                 <tr>
-                  <td className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400" colSpan={3}>
+                  <td
+                    className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400"
+                    colSpan={4}
+                  >
+                    Loading submissions...
+                  </td>
+                </tr>
+              ) : submissions.length === 0 ? (
+                <tr>
+                  <td
+                    className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400"
+                    colSpan={4}
+                  >
                     You have not submitted any document requests yet.
                   </td>
                 </tr>
@@ -193,11 +264,16 @@ export default function DocumentRequestPage() {
                     <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
                       {submission.payload.documentType}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
-                      {new Date(submission.createdAt).toLocaleString()}
-                    </td>
                     <td className="px-4 py-3 text-sm font-medium capitalize text-gray-900 dark:text-gray-100">
                       {submission.status}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
+                      {submission.payload.requiredBy
+                        ? new Date(submission.payload.requiredBy).toLocaleDateString()
+                        : "—"}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
+                      {new Date(submission.createdAt).toLocaleString()}
                     </td>
                   </tr>
                 ))

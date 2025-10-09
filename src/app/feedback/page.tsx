@@ -2,21 +2,76 @@
 
 import {
   useCallback,
+  useEffect,
+  useMemo,
   useState,
   type ChangeEvent,
   type FormEvent,
 } from "react";
-import { useUserSubmissions } from "@/hooks/useUserSubmissions";
-import { createSubmission, type FeedbackPayload } from "@/services/submissionService";
+import { getCurrentUser, type CurrentUser } from "@/services/authService";
+import {
+  createSubmission,
+  listSubmissionsForUser,
+  type FeedbackPayload,
+  type SubmissionRecord,
+} from "@/services/submissionService";
 
 export default function FeedbackPage() {
-  const { currentUser, submissions, refreshSubmissions } =
-    useUserSubmissions("feedback");
+  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(() =>
+    getCurrentUser(),
+  );
+  const [submissions, setSubmissions] = useState<SubmissionRecord<"feedback">[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const [subject, setSubject] = useState("");
   const [details, setDetails] = useState("");
   const [contactMethod, setContactMethod] = useState("");
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const username = useMemo(() => currentUser?.username ?? "", [currentUser]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const handleStorageChange = () => {
+      setCurrentUser(getCurrentUser());
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, []);
+
+  const refreshSubmissions = useCallback(async () => {
+    if (!username) {
+      setSubmissions([]);
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      setError(null);
+      const records = await listSubmissionsForUser("feedback", username);
+      setSubmissions(records);
+    } catch (submissionError) {
+      if (submissionError instanceof Error) {
+        setError(submissionError.message);
+      } else {
+        setError("Unable to load feedback history.");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  }, [username]);
+
+  useEffect(() => {
+    void refreshSubmissions();
+  }, [refreshSubmissions]);
 
   const handleSubjectChange = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => {
@@ -40,7 +95,7 @@ export default function FeedbackPage() {
   );
 
   const handleSubmit = useCallback(
-    (event: FormEvent<HTMLFormElement>) => {
+    async (event: FormEvent<HTMLFormElement>) => {
       event.preventDefault();
       setMessage(null);
       setError(null);
@@ -60,13 +115,18 @@ export default function FeedbackPage() {
           throw new Error("Details are required.");
         }
 
-        createSubmission("feedback", payload, currentUser);
-        refreshSubmissions();
+        const record = await createSubmission(
+          "feedback",
+          payload,
+          currentUser,
+        );
+        setSubmissions((previous) => [record, ...previous]);
 
         setSubject("");
         setDetails("");
         setContactMethod("");
         setMessage("Feedback submitted successfully.");
+        void refreshSubmissions();
       } catch (submissionError) {
         if (submissionError instanceof Error) {
           setError(submissionError.message);
@@ -181,7 +241,16 @@ export default function FeedbackPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
-              {submissions.length === 0 ? (
+              {isLoading ? (
+                <tr>
+                  <td
+                    className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400"
+                    colSpan={3}
+                  >
+                    Loading submissions...
+                  </td>
+                </tr>
+              ) : submissions.length === 0 ? (
                 <tr>
                   <td className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400" colSpan={3}>
                     You have not submitted any feedback yet.

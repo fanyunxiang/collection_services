@@ -1,6 +1,7 @@
 "use client";
 
 import type { CurrentUser } from "@/services/authService";
+import { get, patch, post } from "@/services/httpClient";
 
 export type SubmissionType = "feedback" | "booking" | "document";
 
@@ -42,63 +43,48 @@ export interface SubmissionRecord<T extends SubmissionType> {
   decidedAt?: string;
 }
 
-const STORAGE_KEYS: Record<SubmissionType, string> = {
-  feedback: "collection-services.feedback-submissions",
-  booking: "collection-services.booking-submissions",
-  document: "collection-services.document-submissions",
+interface FeedbackApiRecord {
+  id: string;
+  subject: string;
+  details: string;
+  contactMethod?: string;
+  status: SubmissionStatus;
+  submittedBy: string;
+  createdAt: string;
+  decisionBy?: string;
+  decidedAt?: string;
+}
+
+interface BookingApiRecord {
+  id: string;
+  serviceName: string;
+  preferredDate: string;
+  preferredTime: string;
+  notes?: string;
+  status: SubmissionStatus;
+  submittedBy: string;
+  createdAt: string;
+  decisionBy?: string;
+  decidedAt?: string;
+}
+
+interface DocumentApiRecord {
+  id: string;
+  documentType: string;
+  justification: string;
+  requiredBy?: string;
+  status: SubmissionStatus;
+  submittedBy: string;
+  createdAt: string;
+  decisionBy?: string;
+  decidedAt?: string;
+}
+
+type ApiRecordMap = {
+  feedback: FeedbackApiRecord;
+  booking: BookingApiRecord;
+  document: DocumentApiRecord;
 };
-
-function isBrowser(): boolean {
-  return typeof window !== "undefined" && typeof window.localStorage !== "undefined";
-}
-
-function readFromStorage<T>(key: string, fallback: T): T {
-  if (!isBrowser()) {
-    return fallback;
-  }
-
-  const rawValue = window.localStorage.getItem(key);
-
-  if (!rawValue) {
-    return fallback;
-  }
-
-  try {
-    return JSON.parse(rawValue) as T;
-  } catch (error) {
-    console.warn(`Unable to parse submissions for key "${key}"`, error);
-    return fallback;
-  }
-}
-
-function writeToStorage<T>(key: string, value: T): void {
-  if (!isBrowser()) {
-    return;
-  }
-
-  window.localStorage.setItem(key, JSON.stringify(value));
-}
-
-function buildIdentifier(type: SubmissionType): string {
-  const fallback = `${type}-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
-
-  if (typeof crypto === "undefined" || typeof crypto.randomUUID !== "function") {
-    return fallback;
-  }
-
-  return `${type}-${crypto.randomUUID()}`;
-}
-
-function getAllSubmissions<T extends SubmissionType>(type: T): SubmissionRecord<T>[] {
-  return readFromStorage<SubmissionRecord<T>[]>(STORAGE_KEYS[type], []);
-}
-
-function persistSubmissions<T extends SubmissionType>(
-  type: T,
-  submissions: SubmissionRecord<T>[],
-): void {
-  writeToStorage(STORAGE_KEYS[type], submissions);
-}
 
 function requireUser(user: CurrentUser | null): asserts user is CurrentUser {
   if (!user) {
@@ -106,80 +92,158 @@ function requireUser(user: CurrentUser | null): asserts user is CurrentUser {
   }
 }
 
-export function getSubmissionStorageKey(type: SubmissionType): string {
-  return STORAGE_KEYS[type];
+function requireAdmin(user: CurrentUser | null): asserts user is CurrentUser {
+  requireUser(user);
+
+  if (user.role !== "admin") {
+    throw new Error("Only administrators can update submission status.");
+  }
 }
 
-export function listSubmissions<T extends SubmissionType>(type: T): SubmissionRecord<T>[] {
-  return getAllSubmissions(type);
+function getEndpoint(type: SubmissionType): string {
+  switch (type) {
+    case "feedback":
+      return "/api/feedback";
+    case "booking":
+      return "/api/booking";
+    case "document":
+      return "/api/documents";
+    default:
+      return "";
+  }
 }
 
-export function listSubmissionsForUser<T extends SubmissionType>(
+function normalizeSubmissionRecord<T extends SubmissionType>(
+  type: T,
+  record: ApiRecordMap[T],
+): SubmissionRecord<T> {
+  if (type === "feedback") {
+    const feedbackRecord = record as FeedbackApiRecord;
+
+    return {
+      id: feedbackRecord.id,
+      type,
+      payload: {
+        subject: feedbackRecord.subject,
+        details: feedbackRecord.details,
+        contactMethod: feedbackRecord.contactMethod,
+      },
+      status: feedbackRecord.status,
+      submittedBy: feedbackRecord.submittedBy,
+      createdAt: feedbackRecord.createdAt,
+      decisionBy: feedbackRecord.decisionBy,
+      decidedAt: feedbackRecord.decidedAt,
+    } as SubmissionRecord<T>;
+  }
+
+  if (type === "booking") {
+    const bookingRecord = record as BookingApiRecord;
+
+    return {
+      id: bookingRecord.id,
+      type,
+      payload: {
+        serviceName: bookingRecord.serviceName,
+        preferredDate: bookingRecord.preferredDate,
+        preferredTime: bookingRecord.preferredTime,
+        notes: bookingRecord.notes,
+      },
+      status: bookingRecord.status,
+      submittedBy: bookingRecord.submittedBy,
+      createdAt: bookingRecord.createdAt,
+      decisionBy: bookingRecord.decisionBy,
+      decidedAt: bookingRecord.decidedAt,
+    } as SubmissionRecord<T>;
+  }
+
+  const documentRecord = record as DocumentApiRecord;
+
+  return {
+    id: documentRecord.id,
+    type,
+    payload: {
+      documentType: documentRecord.documentType,
+      justification: documentRecord.justification,
+      requiredBy: documentRecord.requiredBy,
+    },
+    status: documentRecord.status,
+    submittedBy: documentRecord.submittedBy,
+    createdAt: documentRecord.createdAt,
+    decisionBy: documentRecord.decisionBy,
+    decidedAt: documentRecord.decidedAt,
+  } as SubmissionRecord<T>;
+}
+
+async function fetchRecords<T extends SubmissionType>(
+  type: T,
+  url: string,
+): Promise<SubmissionRecord<T>[]> {
+  const response = await get<ApiRecordMap[T][]>(url);
+
+  if (!response.success) {
+    throw new Error(response.message || "Failed to load submissions.");
+  }
+
+  return response.data.map((record) => normalizeSubmissionRecord(type, record));
+}
+
+export async function listSubmissions<T extends SubmissionType>(
+  type: T,
+): Promise<SubmissionRecord<T>[]> {
+  return fetchRecords(type, getEndpoint(type));
+}
+
+export async function listSubmissionsForUser<T extends SubmissionType>(
   type: T,
   username: string,
-): SubmissionRecord<T>[] {
-  return getAllSubmissions(type).filter(
-    (submission) => submission.submittedBy.toLowerCase() === username.toLowerCase(),
-  );
+): Promise<SubmissionRecord<T>[]> {
+  if (!username) {
+    return [];
+  }
+
+  const endpoint = `${getEndpoint(type)}?submittedBy=${encodeURIComponent(username)}`;
+
+  return fetchRecords(type, endpoint);
 }
 
-export function createSubmission<T extends SubmissionType>(
+export async function createSubmission<T extends SubmissionType>(
   type: T,
   payload: SubmissionPayloadMap[T],
   user: CurrentUser | null,
-): SubmissionRecord<T> {
+): Promise<SubmissionRecord<T>> {
   requireUser(user);
 
-  const submissions = getAllSubmissions(type);
-  const now = new Date().toISOString();
-
-  const newSubmission: SubmissionRecord<T> = {
-    id: buildIdentifier(type),
-    type,
-    payload,
-    status: "pending",
+  const endpoint = getEndpoint(type);
+  const response = await post<ApiRecordMap[T]>(endpoint, {
+    ...payload,
     submittedBy: user.username,
-    createdAt: now,
-  };
+  });
 
-  persistSubmissions(type, [...submissions, newSubmission]);
+  if (!response.success) {
+    throw new Error(response.message || "Submission failed.");
+  }
 
-  return newSubmission;
+  return normalizeSubmissionRecord(type, response.data);
 }
 
-export function updateSubmissionStatus<T extends SubmissionType>(
+export async function updateSubmissionStatus<T extends SubmissionType>(
   type: T,
   id: string,
   status: Exclude<SubmissionStatus, "pending">,
   decisionBy: CurrentUser | null,
-): SubmissionRecord<T> {
-  requireUser(decisionBy);
+): Promise<SubmissionRecord<T>> {
+  requireAdmin(decisionBy);
 
-  if (decisionBy.role !== "admin") {
-    throw new Error("Only administrators can update submission status.");
-  }
-
-  const submissions = getAllSubmissions(type);
-
-  const submissionIndex = submissions.findIndex((submission) => submission.id === id);
-
-  if (submissionIndex === -1) {
-    throw new Error("Submission could not be found.");
-  }
-
-  const now = new Date().toISOString();
-
-  const updatedSubmission: SubmissionRecord<T> = {
-    ...submissions[submissionIndex],
+  const endpoint = getEndpoint(type);
+  const response = await patch<ApiRecordMap[T]>(endpoint, {
+    id,
     status,
     decisionBy: decisionBy.username,
-    decidedAt: now,
-  };
+  });
 
-  const nextSubmissions = [...submissions];
-  nextSubmissions.splice(submissionIndex, 1, updatedSubmission);
+  if (!response.success) {
+    throw new Error(response.message || "Failed to update submission status.");
+  }
 
-  persistSubmissions(type, nextSubmissions);
-
-  return updatedSubmission;
+  return normalizeSubmissionRecord(type, response.data);
 }
