@@ -1,6 +1,13 @@
 "use client";
 
-import { Fragment, useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  Fragment,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { getCurrentUser } from "@/services/authService";
 import type { CurrentUser } from "@/services/authService";
 import {
@@ -44,12 +51,31 @@ export function createApprovalPage<T extends SubmissionType>({
     const [currentUser, setCurrentUser] = useState<CurrentUser | null>(() => getCurrentUser());
     const [submissions, setSubmissions] = useState<SubmissionRecord<T>[]>([]);
     const [error, setError] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
     const [expandedSubmissionId, setExpandedSubmissionId] = useState<string | null>(null);
     const submissionType = useRef(type);
 
-    useEffect(() => {
-      setSubmissions(listSubmissions(submissionType.current));
+    const refreshSubmissions = useCallback(async () => {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const records = await listSubmissions(submissionType.current);
+        setSubmissions(records);
+      } catch (loadError) {
+        if (loadError instanceof Error) {
+          setError(loadError.message);
+        } else {
+          setError("Failed to load submissions.");
+        }
+      } finally {
+        setIsLoading(false);
+      }
     }, []);
+
+    useEffect(() => {
+      void refreshSubmissions();
+    }, [refreshSubmissions]);
 
     useEffect(() => {
       if (!isBrowser()) {
@@ -59,11 +85,7 @@ export function createApprovalPage<T extends SubmissionType>({
       const handleStorage = (event: StorageEvent) => {
         if (event.key === "collection-services.current-user") {
           setCurrentUser(getCurrentUser());
-          return;
-        }
-
-        if (!event.key || event.key.endsWith(`${submissionType.current}-submissions`)) {
-          setSubmissions(listSubmissions(submissionType.current));
+          void refreshSubmissions();
         }
       };
 
@@ -72,23 +94,28 @@ export function createApprovalPage<T extends SubmissionType>({
       return () => {
         window.removeEventListener("storage", handleStorage);
       };
-    }, []);
+    }, [refreshSubmissions]);
 
-    const handleDecision = (submissionId: string, decision: DecisionStatus) => {
+    const handleDecision = async (
+      submissionId: string,
+      decision: DecisionStatus,
+    ) => {
       setError(null);
 
       try {
-        const updatedSubmission = updateSubmissionStatus(
+        const updatedSubmission = await updateSubmissionStatus(
           submissionType.current,
           submissionId,
           decision,
           currentUser,
         );
-        setSubmissions((prev) =>
-          prev.map((submission) =>
+        setSubmissions((prev) => {
+          const next = prev.map((submission) =>
             submission.id === submissionId ? updatedSubmission : submission,
-          ),
-        );
+          );
+
+          return next;
+        });
         setExpandedSubmissionId(null);
       } catch (decisionError) {
         if (decisionError instanceof Error) {
@@ -149,7 +176,16 @@ export function createApprovalPage<T extends SubmissionType>({
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
-                {submissions.length === 0 ? (
+                {isLoading ? (
+                  <tr>
+                    <td
+                      className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400"
+                      colSpan={columns.length + 1}
+                    >
+                      Loading submissions...
+                    </td>
+                  </tr>
+                ) : submissions.length === 0 ? (
                   <tr>
                     <td className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400" colSpan={columns.length + 1}>
                       {emptyLabel}

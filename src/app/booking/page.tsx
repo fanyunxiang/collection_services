@@ -2,22 +2,94 @@
 
 import {
   useCallback,
+  useEffect,
+  useMemo,
   useState,
   type ChangeEvent,
   type FormEvent,
 } from "react";
-import { useUserSubmissions } from "@/hooks/useUserSubmissions";
-import { createSubmission, type BookingPayload } from "@/services/submissionService";
+import { getCurrentUser, type CurrentUser } from "@/services/authService";
+import {
+  createSubmission,
+  listSubmissionsForUser,
+  type BookingPayload,
+  type SubmissionRecord,
+} from "@/services/submissionService";
+
+function formatPreferredSlot(date: string, time: string): string {
+  if (!date) {
+    return "";
+  }
+
+  try {
+    const datePart = new Date(date).toLocaleDateString();
+    if (!time) {
+      return datePart;
+    }
+
+    return `${datePart} ${time}`;
+  } catch (error) {
+    return `${date} ${time}`.trim();
+  }
+}
 
 export default function BookingPage() {
-  const { currentUser, submissions, refreshSubmissions } =
-    useUserSubmissions("booking");
+  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(() =>
+    getCurrentUser(),
+  );
+  const [submissions, setSubmissions] = useState<SubmissionRecord<"booking">[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const [serviceName, setServiceName] = useState("");
   const [preferredDate, setPreferredDate] = useState("");
   const [preferredTime, setPreferredTime] = useState("");
   const [notes, setNotes] = useState("");
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const username = useMemo(() => currentUser?.username ?? "", [currentUser]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const handleStorageChange = () => {
+      setCurrentUser(getCurrentUser());
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, []);
+
+  const refreshSubmissions = useCallback(async () => {
+    if (!username) {
+      setSubmissions([]);
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      setError(null);
+      const records = await listSubmissionsForUser("booking", username);
+      setSubmissions(records);
+    } catch (submissionError) {
+      if (submissionError instanceof Error) {
+        setError(submissionError.message);
+      } else {
+        setError("Unable to load booking history.");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  }, [username]);
+
+  useEffect(() => {
+    void refreshSubmissions();
+  }, [refreshSubmissions]);
 
   const handleServiceNameChange = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => {
@@ -48,7 +120,7 @@ export default function BookingPage() {
   );
 
   const handleSubmit = useCallback(
-    (event: FormEvent<HTMLFormElement>) => {
+    async (event: FormEvent<HTMLFormElement>) => {
       event.preventDefault();
       setMessage(null);
       setError(null);
@@ -73,19 +145,22 @@ export default function BookingPage() {
           throw new Error("Preferred time is required.");
         }
 
-        createSubmission("booking", payload, currentUser);
-        refreshSubmissions();
+        const record = await createSubmission("booking", payload, currentUser);
+        setSubmissions((previous) => [record, ...previous]);
 
         setServiceName("");
         setPreferredDate("");
         setPreferredTime("");
         setNotes("");
         setMessage("Booking request submitted successfully.");
+        void refreshSubmissions();
       } catch (submissionError) {
         if (submissionError instanceof Error) {
           setError(submissionError.message);
         } else {
-          setError("An unexpected error occurred while creating the booking request.");
+          setError(
+            "An unexpected error occurred while creating the booking request.",
+          );
         }
       }
     },
@@ -209,13 +284,26 @@ export default function BookingPage() {
                 <th className="px-4 py-2 text-left font-medium text-gray-700 dark:text-gray-200">Service</th>
                 <th className="px-4 py-2 text-left font-medium text-gray-700 dark:text-gray-200">Preferred slot</th>
                 <th className="px-4 py-2 text-left font-medium text-gray-700 dark:text-gray-200">Status</th>
+                <th className="px-4 py-2 text-left font-medium text-gray-700 dark:text-gray-200">Submitted at</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
-              {submissions.length === 0 ? (
+              {isLoading ? (
                 <tr>
-                  <td className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400" colSpan={3}>
-                    You have not created any booking requests yet.
+                  <td
+                    className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400"
+                    colSpan={4}
+                  >
+                    Loading submissions...
+                  </td>
+                </tr>
+              ) : submissions.length === 0 ? (
+                <tr>
+                  <td
+                    className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400"
+                    colSpan={4}
+                  >
+                    You have not submitted any booking requests yet.
                   </td>
                 </tr>
               ) : (
@@ -225,10 +313,16 @@ export default function BookingPage() {
                       {submission.payload.serviceName}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
-                      {new Date(`${submission.payload.preferredDate}T${submission.payload.preferredTime || "00:00"}`).toLocaleString()}
+                      {formatPreferredSlot(
+                        submission.payload.preferredDate,
+                        submission.payload.preferredTime,
+                      )}
                     </td>
                     <td className="px-4 py-3 text-sm font-medium capitalize text-gray-900 dark:text-gray-100">
                       {submission.status}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
+                      {new Date(submission.createdAt).toLocaleString()}
                     </td>
                   </tr>
                 ))
