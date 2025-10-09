@@ -252,33 +252,25 @@ export const off =  (
 
 
 /**
- * @param {String | Number} timestamp 时间戳
- * @param {String } fmt 格式
- * @returns {String} 指定格式的时间样式
- * @description 格式化时间戳
+ *
+ * @param {string | number | Date} date - The date to format. Can be a date string, timestamp, or Date object.
+ * @returns {string} The formatted date and time string, e.g. "09 Oct 2025, 06:32 pm".
+ * @description Uses the built-in Intl API (`toLocaleString`) with the "en-AU" locale.
+ * Automatically handles time zone conversion, localization, and daylight saving adjustments.
  */
-export const formatDate = (timestamp: number | string, fmt = 'yyyy-MM-dd hh:mm:ss'): string => {
-  if (!timestamp) return ''
-  const date = new Date(timestamp)
-  const padLeftZero = (str: string | number): string => {
-    return `00${str}`.slice(-2);
-  };
 
-  const year = date.getFullYear();
-  const month = date.getMonth() + 1;
-  const day = date.getDate();
-  const hour = date.getHours();
-  const minute = date.getMinutes();
-  const second = date.getSeconds();
 
-  return fmt.replace(/yyyy/g, year.toString())
-            .replace(/MM/g, padLeftZero(month))
-            .replace(/dd/g, padLeftZero(day))
-            .replace(/hh/g, padLeftZero(hour))
-            .replace(/mm/g, padLeftZero(minute))
-            .replace(/ss/g, padLeftZero(second));
-};
-
+export function formatDate(date?: string | number | Date): string {
+  if (!date) return "";
+  const d = new Date(date);
+  return d.toLocaleString("en-AU", {
+    year: "numeric",
+    month: "short",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
 /**
  * @param {String | Number} intnum 需要格式化的厘
  * @description 厘截取两位小数
@@ -476,3 +468,5 @@ export const findIndex = (ary: Array<any>, fn: Fn): number => {
   })
   return index
 }
+
+

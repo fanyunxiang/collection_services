@@ -12,8 +12,8 @@ import { Providers } from "./providers";
 
 export const metadata: Metadata = {
   title: {
-    template: "%s | collection-services - Next.js Dashboard Kit",
-    default: "collection-services - Next.js Dashboard Kit",
+    template: "%s | collection-services",
+    default: "collection-services",
   },
   description:
     "Next.js admin dashboard toolkit with 200+ templates, UI components, and integrations for fast dashboard development.",
