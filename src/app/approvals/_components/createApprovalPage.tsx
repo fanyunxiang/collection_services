@@ -8,14 +8,18 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { getCurrentUser } from "@/services/authService";
-import type { CurrentUser } from "@/services/authService";
+import {
+  CURRENT_USER_STORAGE_KEY,
+  getCurrentUser,
+  type CurrentUser,
+} from "@/services/authService";
 import {
   listSubmissions,
   updateSubmissionStatus,
   type SubmissionRecord,
   type SubmissionStatus,
   type SubmissionType,
+  SUBMISSIONS_STORAGE_KEY,
 } from "@/services/submissionService";
 
 type DecisionStatus = Exclude<SubmissionStatus, "pending">;
@@ -83,8 +87,16 @@ export function createApprovalPage<T extends SubmissionType>({
       }
 
       const handleStorage = (event: StorageEvent) => {
-        if (event.key === "collection-services.current-user") {
+        const isUserChange =
+          event.key === CURRENT_USER_STORAGE_KEY || event.key === null;
+        const isSubmissionChange =
+          event.key === SUBMISSIONS_STORAGE_KEY || event.key === null;
+
+        if (isUserChange) {
           setCurrentUser(getCurrentUser());
+        }
+
+        if (isSubmissionChange || isUserChange) {
           void refreshSubmissions();
         }
       };

@@ -1,8 +1,19 @@
-// lib/supabaseClient.ts
-import { createClient } from '@supabase/supabase-js';
+/**
+ * Supabase integration is disabled for the local-only demo build.
+ * This placeholder client intentionally throws if accessed so that
+ * future database work can be re-enabled without changing import paths.
+ */
+const DISABLED_MESSAGE =
+  "Supabase integration is disabled for the local-only demo build.";
 
-// replace with your Supabase URL and anon key from your dashboard
-export const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+export const supabase = new Proxy(
+  {},
+  {
+    get() {
+      throw new Error(DISABLED_MESSAGE);
+    },
+    apply() {
+      throw new Error(DISABLED_MESSAGE);
+    },
+  },
+) as never;

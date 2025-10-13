@@ -8,12 +8,17 @@ import {
   type ChangeEvent,
   type FormEvent,
 } from "react";
-import { getCurrentUser, type CurrentUser } from "@/services/authService";
+import {
+  CURRENT_USER_STORAGE_KEY,
+  getCurrentUser,
+  type CurrentUser,
+} from "@/services/authService";
 import {
   createSubmission,
   listSubmissionsForUser,
   type BookingPayload,
   type SubmissionRecord,
+  SUBMISSIONS_STORAGE_KEY,
 } from "@/services/submissionService";
 
 function formatPreferredSlot(date: string, time: string): string {
@@ -48,22 +53,6 @@ export default function BookingPage() {
 
   const username = useMemo(() => currentUser?.username ?? "", [currentUser]);
 
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    const handleStorageChange = () => {
-      setCurrentUser(getCurrentUser());
-    };
-
-    window.addEventListener("storage", handleStorageChange);
-
-    return () => {
-      window.removeEventListener("storage", handleStorageChange);
-    };
-  }, []);
-
   const refreshSubmissions = useCallback(async () => {
     if (!username) {
       setSubmissions([]);
@@ -89,6 +78,33 @@ export default function BookingPage() {
 
   useEffect(() => {
     void refreshSubmissions();
+  }, [refreshSubmissions]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const handleStorageChange = (event: StorageEvent) => {
+      const isUserChange =
+        event.key === CURRENT_USER_STORAGE_KEY || event.key === null;
+      const isSubmissionChange =
+        event.key === SUBMISSIONS_STORAGE_KEY || event.key === null;
+
+      if (isUserChange) {
+        setCurrentUser(getCurrentUser());
+      }
+
+      if (isSubmissionChange || isUserChange) {
+        void refreshSubmissions();
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+    };
   }, [refreshSubmissions]);
 
   const handleServiceNameChange = useCallback(
