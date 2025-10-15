@@ -7,21 +7,43 @@ export type SubmissionType = "feedback" | "booking" | "document";
 export type SubmissionStatus = "pending" | "approved" | "rejected";
 
 export interface FeedbackPayload {
-  subject: string;
-  details: string;
+  applicantName: string;
+  licenseType: string;
+  applicationReason: string;
+  contactNumber?: string;
+  /** @deprecated kept for backward compatibility */
+  subject?: string;
+  /** @deprecated kept for backward compatibility */
+  details?: string;
+  /** @deprecated kept for backward compatibility */
   contactMethod?: string;
 }
 
 export interface BookingPayload {
-  serviceName: string;
-  preferredDate: string;
-  preferredTime: string;
+  patientName: string;
+  appointmentDate: string;
+  appointmentTime: string;
+  certificatePurpose: string;
+  /** @deprecated kept for backward compatibility */
+  serviceName?: string;
+  /** @deprecated kept for backward compatibility */
+  preferredDate?: string;
+  /** @deprecated kept for backward compatibility */
+  preferredTime?: string;
+  /** @deprecated kept for backward compatibility */
   notes?: string;
 }
 
 export interface DocumentPayload {
-  documentType: string;
-  justification: string;
+  taxpayerName: string;
+  taxYear: string;
+  refundReason: string;
+  expectedPayoutDate?: string;
+  /** @deprecated kept for backward compatibility */
+  documentType?: string;
+  /** @deprecated kept for backward compatibility */
+  justification?: string;
+  /** @deprecated kept for backward compatibility */
   requiredBy?: string;
 }
 
