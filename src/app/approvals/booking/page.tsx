@@ -21,12 +21,12 @@ function formatSchedule(submission: any): string {
 
 const BookingApprovalPage = createApprovalPage({
   type: "booking",
-  title: "医疗证明申请审核",
-  description: "审核用户提交的医疗证明申请，确认预约时间和用途说明后再做决定。",
-  emptyLabel: "当前没有待审核的医疗证明申请。",
+  title: "Medical Certificate Application Reviews",
+  description: "Review medical certificate applications and verify the requested schedule and purpose before making a decision.",
+  emptyLabel: "There are no medical certificate applications awaiting review.",
   columns: [
     {
-      header: "患者信息",
+      header: "Patient Details",
       render: (submission) => {
         const name = submission.payload.patientName ?? submission.payload.serviceName ?? "—";
         const purpose =
@@ -35,28 +35,28 @@ const BookingApprovalPage = createApprovalPage({
         return (
           <div className="space-y-1">
             <p className="font-medium text-gray-900 dark:text-gray-100">{name}</p>
-            <p className="text-xs text-gray-600 dark:text-gray-300 break-words">用途：{purpose}</p>
+            <p className="text-xs text-gray-600 dark:text-gray-300 break-words">Purpose: {purpose}</p>
           </div>
         );
       },
     },
     {
-      header: "预约时间",
+      header: "Appointment Slot",
       className: "whitespace-nowrap",
       render: (submission) => formatSchedule(submission),
     },
     {
-      header: "提交账号",
+      header: "Submitted By",
       className: "whitespace-nowrap",
       render: (submission) => submission.submittedBy,
     },
     {
-      header: "提交时间",
+      header: "Submitted",
       className: "whitespace-nowrap",
       render: (submission) => new Date(submission.createdAt).toLocaleString(),
     },
     {
-      header: "状态",
+      header: "Status",
       className: "whitespace-nowrap",
       render: (submission) => (
         <span className="capitalize text-gray-900 dark:text-gray-100">
@@ -69,38 +69,38 @@ const BookingApprovalPage = createApprovalPage({
     return (
       <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-1">
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">患者姓名</h3>
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Patient Name</h3>
           <p className="text-sm text-gray-700 dark:text-gray-300">
             {submission.payload.patientName ?? submission.payload.serviceName ?? "—"}
           </p>
         </div>
         <div className="space-y-1">
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">预约时间</h3>
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Appointment Slot</h3>
           <p className="text-sm text-gray-700 dark:text-gray-300">{formatSchedule(submission)}</p>
         </div>
         <div className="space-y-1 md:col-span-2">
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">用途说明</h3>
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Purpose</h3>
           <p className="text-sm text-gray-700 dark:text-gray-300">
             {submission.payload.certificatePurpose ?? submission.payload.notes ?? "—"}
           </p>
         </div>
         <div className="space-y-1">
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">提交账号</h3>
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Submitted By</h3>
           <p className="text-sm text-gray-700 dark:text-gray-300">{submission.submittedBy}</p>
         </div>
         <div className="space-y-1">
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">提交时间</h3>
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Submitted</h3>
           <p className="text-sm text-gray-700 dark:text-gray-300">
             {new Date(submission.createdAt).toLocaleString()}
           </p>
         </div>
         <div className="space-y-1">
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">状态</h3>
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Status</h3>
           <p className="text-sm capitalize text-gray-700 dark:text-gray-300">{submission.status}</p>
         </div>
         {submission.decisionBy ? (
           <div className="space-y-1">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">审核人</h3>
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Reviewer</h3>
             <p className="text-sm text-gray-700 dark:text-gray-300">
               {submission.decisionBy}
               {submission.decidedAt

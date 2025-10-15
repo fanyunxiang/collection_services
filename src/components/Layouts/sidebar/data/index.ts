@@ -38,22 +38,22 @@ function findFirstUrl(sections: SidebarSection[]): string | null {
 
 const USER_SECTIONS: SidebarSection[] = [
   {
-    label: "服务项目",
+    label: "Services",
     items: [
       {
-        title: "驾照申请",
+        title: "Driver's License Application",
         icon: Icons.FourCircle,
         url: "/feedback",
         items: [],
       },
       {
-        title: "医疗证明申请",
+        title: "Medical Certificate Application",
         icon: Icons.Calendar,
         url: "/booking",
         items: [],
       },
       {
-        title: "退税申请",
+        title: "Tax Refund Application",
         icon: Icons.Table,
         url: "/documents",
         items: [],
@@ -64,22 +64,22 @@ const USER_SECTIONS: SidebarSection[] = [
 
 const ADMIN_SECTIONS: SidebarSection[] = [
   {
-    label: "审核中心",
+    label: "Approvals",
     items: [
       {
-        title: "驾照申请审核",
+        title: "Driver's License Reviews",
         icon: Icons.FourCircle,
         url: "/approvals/feedback",
         items: [],
       },
       {
-        title: "医疗证明申请审核",
+        title: "Medical Certificate Reviews",
         icon: Icons.Calendar,
         url: "/approvals/booking",
         items: [],
       },
       {
-        title: "退税申请审核",
+        title: "Tax Refund Reviews",
         icon: Icons.Table,
         url: "/approvals/documents",
         items: [],

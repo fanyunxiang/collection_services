@@ -69,7 +69,7 @@ export default function BookingPage() {
       if (submissionError instanceof Error) {
         setError(submissionError.message);
       } else {
-        setError("无法加载医疗证明申请记录。");
+        setError("Unable to load medical certificate applications.");
       }
     } finally {
       setIsLoading(false);
@@ -150,19 +150,19 @@ export default function BookingPage() {
         };
 
         if (!payload.patientName) {
-          throw new Error("请填写患者姓名。");
+          throw new Error("Please enter the patient's name.");
         }
 
         if (!payload.appointmentDate) {
-          throw new Error("请选择希望开具日期。");
+          throw new Error("Please choose the desired issuance date.");
         }
 
         if (!payload.appointmentTime) {
-          throw new Error("请选择希望时间。");
+          throw new Error("Please choose the desired time.");
         }
 
         if (!payload.certificatePurpose) {
-          throw new Error("请填写开具用途说明。");
+          throw new Error("Please describe the purpose for the certificate.");
         }
 
         const record = await createSubmission("booking", payload, currentUser);
@@ -172,13 +172,13 @@ export default function BookingPage() {
         setAppointmentDate("");
         setAppointmentTime("");
         setCertificatePurpose("");
-        setMessage("医疗证明申请提交成功。");
+        setMessage("Medical certificate application submitted successfully.");
         void refreshSubmissions();
       } catch (submissionError) {
         if (submissionError instanceof Error) {
           setError(submissionError.message);
         } else {
-          setError("提交医疗证明申请时发生未知错误。");
+          setError("An unknown error occurred while submitting the medical certificate application.");
         }
       }
     },
@@ -188,8 +188,8 @@ export default function BookingPage() {
   if (!currentUser) {
     return (
       <div className="space-y-4">
-        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">医疗证明申请</h1>
-        <p className="text-sm text-gray-600 dark:text-gray-300">请先登录后再提交医疗证明申请。</p>
+        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Medical Certificate Application</h1>
+        <p className="text-sm text-gray-600 dark:text-gray-300">Please sign in before submitting a medical certificate application.</p>
       </div>
     );
   }
@@ -198,9 +198,9 @@ export default function BookingPage() {
     <div className="mx-auto max-w-3xl space-y-8">
       <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
         <div className="mb-6 space-y-1">
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">医疗证明申请</h1>
+          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Medical Certificate Application</h1>
           <p className="text-sm text-gray-600 dark:text-gray-300">
-            填写患者信息与开具用途，我们会在审核后尽快反馈结果。
+            Provide the patient details and explain why the certificate is needed. We will respond after the review.
           </p>
         </div>
 
@@ -219,7 +219,7 @@ export default function BookingPage() {
         <form className="space-y-5" onSubmit={handleSubmit}>
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700 dark:text-gray-200" htmlFor="patientName">
-              患者姓名
+              Patient Name
             </label>
             <input
               id="patientName"
@@ -227,7 +227,7 @@ export default function BookingPage() {
               value={patientName}
               onChange={handlePatientNameChange}
               className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100"
-              placeholder="请输入患者姓名"
+              placeholder="Enter the patient name"
               required
             />
           </div>
@@ -235,7 +235,7 @@ export default function BookingPage() {
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700 dark:text-gray-200" htmlFor="appointmentDate">
-                希望开具日期
+                Preferred Date
               </label>
               <input
                 type="date"
@@ -250,7 +250,7 @@ export default function BookingPage() {
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700 dark:text-gray-200" htmlFor="appointmentTime">
-                希望时间
+                Preferred Time
               </label>
               <input
                 type="time"
@@ -266,7 +266,7 @@ export default function BookingPage() {
 
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700 dark:text-gray-200" htmlFor="certificatePurpose">
-              开具用途说明
+              Purpose for Certificate
             </label>
             <textarea
               id="certificatePurpose"
@@ -274,7 +274,7 @@ export default function BookingPage() {
               value={certificatePurpose}
               onChange={handleCertificatePurposeChange}
               className="h-24 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100"
-              placeholder="请描述需要医疗证明的原因"
+              placeholder="Describe why you need the medical certificate"
               required
             />
           </div>
@@ -283,26 +283,26 @@ export default function BookingPage() {
             type="submit"
             className="inline-flex w-full items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
           >
-            提交申请
+            Submit Application
           </button>
         </form>
       </div>
 
       <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">申请记录</h2>
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Application History</h2>
         <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
-          查看以往的医疗证明申请与审核状态。
+          Review your previous medical certificate applications and their approval status.
         </p>
 
         <div className="mt-4 overflow-hidden rounded-lg border border-gray-200 dark:border-gray-800">
           <table className="min-w-full divide-y divide-gray-200 text-sm dark:divide-gray-800">
             <thead className="bg-gray-50 dark:bg-gray-800">
               <tr>
-                <th className="px-4 py-2 text-left font-medium text-gray-700 dark:text-gray-200">患者姓名</th>
-                <th className="px-4 py-2 text-left font-medium text-gray-700 dark:text-gray-200">预约时间</th>
-                <th className="px-4 py-2 text-left font-medium text-gray-700 dark:text-gray-200">用途说明</th>
-                <th className="px-4 py-2 text-left font-medium text-gray-700 dark:text-gray-200">提交时间</th>
-                <th className="px-4 py-2 text-left font-medium text-gray-700 dark:text-gray-200">状态</th>
+                <th className="px-4 py-2 text-left font-medium text-gray-700 dark:text-gray-200">Patient Name</th>
+                <th className="px-4 py-2 text-left font-medium text-gray-700 dark:text-gray-200">Appointment Slot</th>
+                <th className="px-4 py-2 text-left font-medium text-gray-700 dark:text-gray-200">Purpose</th>
+                <th className="px-4 py-2 text-left font-medium text-gray-700 dark:text-gray-200">Submitted</th>
+                <th className="px-4 py-2 text-left font-medium text-gray-700 dark:text-gray-200">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
@@ -312,7 +312,7 @@ export default function BookingPage() {
                     className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400"
                     colSpan={5}
                   >
-                    正在加载申请记录…
+                    Loading applications…
                   </td>
                 </tr>
               ) : submissions.length === 0 ? (
@@ -321,7 +321,7 @@ export default function BookingPage() {
                     className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400"
                     colSpan={5}
                   >
-                    目前还没有提交过医疗证明申请。
+                    You have not submitted any medical certificate applications yet.
                   </td>
                 </tr>
               ) : (

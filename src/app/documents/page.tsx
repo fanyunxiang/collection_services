@@ -52,7 +52,7 @@ export default function DocumentRequestPage() {
       if (submissionError instanceof Error) {
         setError(submissionError.message);
       } else {
-        setError("无法加载退税申请记录。");
+        setError("Unable to load tax refund applications.");
       }
     } finally {
       setIsLoading(false);
@@ -133,15 +133,15 @@ export default function DocumentRequestPage() {
         };
 
         if (!payload.taxpayerName) {
-          throw new Error("请填写纳税人姓名。");
+          throw new Error("Please enter the taxpayer's name.");
         }
 
         if (!payload.taxYear) {
-          throw new Error("请填写申请年份。");
+          throw new Error("Please enter the filing year.");
         }
 
         if (!payload.refundReason) {
-          throw new Error("请填写退款原因。");
+          throw new Error("Please describe the reason for the refund.");
         }
 
         const record = await createSubmission("document", payload, currentUser);
@@ -151,13 +151,13 @@ export default function DocumentRequestPage() {
         setTaxYear("");
         setRefundReason("");
         setExpectedPayoutDate("");
-        setMessage("退税申请提交成功。");
+        setMessage("Tax refund application submitted successfully.");
         void refreshSubmissions();
       } catch (submissionError) {
         if (submissionError instanceof Error) {
           setError(submissionError.message);
         } else {
-          setError("提交退税申请时发生未知错误。");
+          setError("An unknown error occurred while submitting the tax refund application.");
         }
       }
     },
@@ -167,8 +167,8 @@ export default function DocumentRequestPage() {
   if (!currentUser) {
     return (
       <div className="space-y-4">
-        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">退税申请</h1>
-        <p className="text-sm text-gray-600 dark:text-gray-300">请先登录后再提交退税申请。</p>
+        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Tax Refund Application</h1>
+        <p className="text-sm text-gray-600 dark:text-gray-300">Please sign in before submitting a tax refund application.</p>
       </div>
     );
   }
@@ -177,9 +177,9 @@ export default function DocumentRequestPage() {
     <div className="mx-auto max-w-3xl space-y-8">
       <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
         <div className="mb-6 space-y-1">
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">退税申请</h1>
+          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Tax Refund Application</h1>
           <p className="text-sm text-gray-600 dark:text-gray-300">
-            填写纳税信息和退款原因，我们会尽快审核您的退税申请。
+            Provide the taxpayer details and refund justification so we can review your request quickly.
           </p>
         </div>
 
@@ -198,7 +198,7 @@ export default function DocumentRequestPage() {
         <form className="space-y-5" onSubmit={handleSubmit}>
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700 dark:text-gray-200" htmlFor="taxpayerName">
-              纳税人姓名
+              Taxpayer Name
             </label>
             <input
               id="taxpayerName"
@@ -206,14 +206,14 @@ export default function DocumentRequestPage() {
               value={taxpayerName}
               onChange={handleTaxpayerNameChange}
               className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100"
-              placeholder="请输入纳税人姓名"
+              placeholder="Enter the taxpayer name"
               required
             />
           </div>
 
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700 dark:text-gray-200" htmlFor="taxYear">
-              申请年份
+              Filing Year
             </label>
             <input
               id="taxYear"
@@ -221,14 +221,14 @@ export default function DocumentRequestPage() {
               value={taxYear}
               onChange={handleTaxYearChange}
               className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100"
-              placeholder="例如 2023"
+              placeholder="For example: 2023"
               required
             />
           </div>
 
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700 dark:text-gray-200" htmlFor="refundReason">
-              退款原因
+              Refund Reason
             </label>
             <textarea
               id="refundReason"
@@ -236,14 +236,14 @@ export default function DocumentRequestPage() {
               value={refundReason}
               onChange={handleRefundReasonChange}
               className="h-28 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100"
-              placeholder="请描述申请退税的原因"
+              placeholder="Describe why you are requesting a refund"
               required
             />
           </div>
 
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700 dark:text-gray-200" htmlFor="expectedPayoutDate">
-              预计到账日期（选填）
+              Expected Payout Date (optional)
             </label>
             <input
               type="date"
@@ -259,27 +259,27 @@ export default function DocumentRequestPage() {
             type="submit"
             className="inline-flex w-full items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
           >
-            提交申请
+            Submit Application
           </button>
         </form>
       </div>
 
       <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">申请记录</h2>
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Application History</h2>
         <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
-          查看以往的退税申请与审核状态。
+          Review your previous tax refund applications and their approval status.
         </p>
 
         <div className="mt-4 overflow-hidden rounded-lg border border-gray-200 dark:border-gray-800">
           <table className="min-w-full divide-y divide-gray-200 text-sm dark:divide-gray-800">
             <thead className="bg-gray-50 dark:bg-gray-800">
               <tr>
-                <th className="px-4 py-2 text-left font-medium text-gray-700 dark:text-gray-200">纳税人</th>
-                <th className="px-4 py-2 text-left font-medium text-gray-700 dark:text-gray-200">申请年份</th>
-                <th className="px-4 py-2 text-left font-medium text-gray-700 dark:text-gray-200">退款原因</th>
-                <th className="px-4 py-2 text-left font-medium text-gray-700 dark:text-gray-200">预计到账日期</th>
-                <th className="px-4 py-2 text-left font-medium text-gray-700 dark:text-gray-200">提交时间</th>
-                <th className="px-4 py-2 text-left font-medium text-gray-700 dark:text-gray-200">状态</th>
+                <th className="px-4 py-2 text-left font-medium text-gray-700 dark:text-gray-200">Taxpayer</th>
+                <th className="px-4 py-2 text-left font-medium text-gray-700 dark:text-gray-200">Filing Year</th>
+                <th className="px-4 py-2 text-left font-medium text-gray-700 dark:text-gray-200">Refund Reason</th>
+                <th className="px-4 py-2 text-left font-medium text-gray-700 dark:text-gray-200">Expected Payout Date</th>
+                <th className="px-4 py-2 text-left font-medium text-gray-700 dark:text-gray-200">Submitted</th>
+                <th className="px-4 py-2 text-left font-medium text-gray-700 dark:text-gray-200">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
@@ -289,7 +289,7 @@ export default function DocumentRequestPage() {
                     className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400"
                     colSpan={6}
                   >
-                    正在加载申请记录…
+                    Loading applications…
                   </td>
                 </tr>
               ) : submissions.length === 0 ? (
@@ -298,7 +298,7 @@ export default function DocumentRequestPage() {
                     className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400"
                     colSpan={6}
                   >
-                    目前还没有提交过退税申请。
+                    You have not submitted any tax refund applications yet.
                   </td>
                 </tr>
               ) : (

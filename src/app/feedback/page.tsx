@@ -52,7 +52,7 @@ export default function FeedbackPage() {
       if (submissionError instanceof Error) {
         setError(submissionError.message);
       } else {
-        setError("无法加载驾照申请记录。");
+        setError("Unable to load driver's license applications.");
       }
     } finally {
       setIsLoading(false);
@@ -133,15 +133,15 @@ export default function FeedbackPage() {
         };
 
         if (!payload.applicantName) {
-          throw new Error("请填写申请人姓名。");
+          throw new Error("Please enter the applicant's name.");
         }
 
         if (!payload.licenseType) {
-          throw new Error("请填写申请驾照类型。");
+          throw new Error("Please specify the license class.");
         }
 
         if (!payload.applicationReason) {
-          throw new Error("请填写申请原因。");
+          throw new Error("Please describe the reason for applying.");
         }
 
         const record = await createSubmission(
@@ -155,13 +155,13 @@ export default function FeedbackPage() {
         setLicenseType("");
         setApplicationReason("");
         setContactNumber("");
-        setMessage("驾照申请提交成功。");
+        setMessage("Driver's license application submitted successfully.");
         void refreshSubmissions();
       } catch (submissionError) {
         if (submissionError instanceof Error) {
           setError(submissionError.message);
         } else {
-          setError("提交驾照申请时发生未知错误。");
+          setError("An unknown error occurred while submitting the driver's license application.");
         }
       }
     },
@@ -171,8 +171,10 @@ export default function FeedbackPage() {
   if (!currentUser) {
     return (
       <div className="space-y-4">
-        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">驾照申请</h1>
-        <p className="text-sm text-gray-600 dark:text-gray-300">请先登录后再提交驾照申请。</p>
+        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Driver&apos;s License Application</h1>
+          <p className="text-sm text-gray-600 dark:text-gray-300">
+            Please sign in before submitting a driver&apos;s license application.
+          </p>
       </div>
     );
   }
@@ -181,9 +183,10 @@ export default function FeedbackPage() {
     <div className="mx-auto max-w-3xl space-y-8">
       <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
         <div className="mb-6 space-y-1">
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">驾照申请</h1>
+          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Driver&apos;s License Application</h1>
           <p className="text-sm text-gray-600 dark:text-gray-300">
-            填写个人信息和申请原因，我们会尽快审核您的驾照申请。
+            Provide your personal details and application reason and we will review your driver&apos;s license request as soon as
+            possible.
           </p>
         </div>
 
@@ -202,7 +205,7 @@ export default function FeedbackPage() {
         <form className="space-y-5" onSubmit={handleSubmit}>
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700 dark:text-gray-200" htmlFor="applicantName">
-              申请人姓名
+              Applicant Name
             </label>
             <input
               id="applicantName"
@@ -210,14 +213,14 @@ export default function FeedbackPage() {
               value={applicantName}
               onChange={handleApplicantNameChange}
               className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100"
-              placeholder="请输入身份证上的姓名"
+              placeholder="Enter the name shown on your ID"
               required
             />
           </div>
 
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700 dark:text-gray-200" htmlFor="licenseType">
-              申请驾照类型
+              License Class
             </label>
             <input
               id="licenseType"
@@ -225,14 +228,14 @@ export default function FeedbackPage() {
               value={licenseType}
               onChange={handleLicenseTypeChange}
               className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100"
-              placeholder="例如 C1、C2 等"
+              placeholder="For example: Class C, Class D"
               required
             />
           </div>
 
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700 dark:text-gray-200" htmlFor="applicationReason">
-              申请原因
+              Application Reason
             </label>
             <textarea
               id="applicationReason"
@@ -240,14 +243,14 @@ export default function FeedbackPage() {
               value={applicationReason}
               onChange={handleApplicationReasonChange}
               className="h-32 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100"
-              placeholder="请说明申请驾照的原因"
+              placeholder="Explain why you are applying for a driver's license"
               required
             />
           </div>
 
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700 dark:text-gray-200" htmlFor="contactNumber">
-              联系电话（选填）
+              Contact Number (optional)
             </label>
             <input
               id="contactNumber"
@@ -255,7 +258,7 @@ export default function FeedbackPage() {
               value={contactNumber}
               onChange={handleContactNumberChange}
               className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100"
-              placeholder="用于通知审核结果的联系方式"
+              placeholder="Phone number for status updates"
             />
           </div>
 
@@ -263,26 +266,26 @@ export default function FeedbackPage() {
             type="submit"
             className="inline-flex w-full items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
           >
-            提交申请
+            Submit Application
           </button>
         </form>
       </div>
 
       <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">申请记录</h2>
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Application History</h2>
         <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
-          查看以往的驾照申请及审核进度。
+          Review your previous driver&apos;s license applications and their approval status.
         </p>
 
         <div className="mt-4 overflow-hidden rounded-lg border border-gray-200 dark:border-gray-800">
           <table className="min-w-full divide-y divide-gray-200 text-sm dark:divide-gray-800">
             <thead className="bg-gray-50 dark:bg-gray-800">
               <tr>
-                <th className="px-4 py-2 text-left font-medium text-gray-700 dark:text-gray-200">申请人</th>
-                <th className="px-4 py-2 text-left font-medium text-gray-700 dark:text-gray-200">驾照类型</th>
-                <th className="px-4 py-2 text-left font-medium text-gray-700 dark:text-gray-200">申请原因</th>
-                <th className="px-4 py-2 text-left font-medium text-gray-700 dark:text-gray-200">提交时间</th>
-                <th className="px-4 py-2 text-left font-medium text-gray-700 dark:text-gray-200">状态</th>
+                <th className="px-4 py-2 text-left font-medium text-gray-700 dark:text-gray-200">Applicant</th>
+                <th className="px-4 py-2 text-left font-medium text-gray-700 dark:text-gray-200">License Class</th>
+                <th className="px-4 py-2 text-left font-medium text-gray-700 dark:text-gray-200">Reason</th>
+                <th className="px-4 py-2 text-left font-medium text-gray-700 dark:text-gray-200">Submitted</th>
+                <th className="px-4 py-2 text-left font-medium text-gray-700 dark:text-gray-200">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
@@ -292,7 +295,7 @@ export default function FeedbackPage() {
                     className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400"
                     colSpan={5}
                   >
-                    正在加载申请记录…
+                    Loading applications…
                   </td>
                 </tr>
               ) : submissions.length === 0 ? (
@@ -301,7 +304,7 @@ export default function FeedbackPage() {
                     className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400"
                     colSpan={5}
                   >
-                    目前还没有提交过驾照申请。
+                    You have not submitted any driver&apos;s license applications yet.
                   </td>
                 </tr>
               ) : (

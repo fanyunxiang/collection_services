@@ -14,7 +14,7 @@ const renderApplicationInfo = (submission: any) => {
     <div className="space-y-1">
       <p className="font-medium text-gray-900 dark:text-gray-100">{applicant}</p>
       <p className="text-xs text-gray-600 dark:text-gray-300 break-words">
-        原因：{reason}
+        Reason: {reason}
       </p>
     </div>
   );
@@ -22,7 +22,7 @@ const renderApplicationInfo = (submission: any) => {
 
 const renderSubmittedInfo = (submission: any) => (
   <div className="space-y-1">
-    <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">提交时间</h3>
+    <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Submitted</h3>
     <p className="text-sm text-gray-700 dark:text-gray-300">
       {formatDate(submission.createdAt)}
     </p>
@@ -32,7 +32,7 @@ const renderSubmittedInfo = (submission: any) => (
 const renderReviewerInfo = (submission: any) =>
   submission.decisionBy ? (
     <div className="space-y-1">
-      <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">审核人</h3>
+      <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Reviewer</h3>
       <p className="text-sm text-gray-700 dark:text-gray-300">
         {submission.decisionBy}
         {submission.decidedAt ? ` · ${formatDate(submission.decidedAt)}` : ""}
@@ -43,32 +43,32 @@ const renderReviewerInfo = (submission: any) =>
 // Main component
 const FeedbackApprovalPage = createApprovalPage({
   type: "feedback",
-  title: "驾照申请审核",
-  description: "审核用户提交的驾照申请，确认信息无误后再进行批准。",
-  emptyLabel: "当前没有待审核的驾照申请。",
+  title: "Driver's License Application Reviews",
+  description: "Review driver's license applications and confirm the details before approving.",
+  emptyLabel: "There are no driver's license applications awaiting review.",
   columns: [
     {
-      header: "申请人",
+      header: "Applicant",
       render: renderApplicationInfo,
     },
     {
-      header: "驾照类型",
+      header: "License Class",
       className: "whitespace-nowrap",
       render: (submission) => submission.payload.licenseType ?? "—",
     },
     {
-      header: "联系电话",
+      header: "Contact Number",
       className: "whitespace-nowrap",
       render: (submission) =>
         submission.payload.contactNumber ?? submission.payload.contactMethod ?? "—",
     },
     {
-      header: "提交时间",
+      header: "Submitted",
       className: "whitespace-nowrap",
       render: (submission) => formatDate(submission.createdAt),
     },
     {
-      header: "状态",
+      header: "Status",
       className: "whitespace-nowrap",
       render: (submission) => (
         <span className="capitalize text-gray-900 dark:text-gray-100">
@@ -80,20 +80,20 @@ const FeedbackApprovalPage = createApprovalPage({
   renderDetails: (submission) => (
     <div className="grid gap-4 md:grid-cols-2">
       <div className="space-y-1">
-        <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">申请人</h3>
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Applicant</h3>
         <p className="text-sm text-gray-700 dark:text-gray-300">
           {submission.payload.applicantName ?? submission.payload.subject ?? "—"}
         </p>
       </div>
       <div className="space-y-1">
-        <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">驾照类型</h3>
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">License Class</h3>
         <p className="text-sm text-gray-700 dark:text-gray-300">
           {submission.payload.licenseType ?? "—"}
         </p>
       </div>
 
       <div className="space-y-1 md:col-span-2">
-        <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">申请原因</h3>
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Application Reason</h3>
         <p className="text-sm text-gray-700 dark:text-gray-300">
           {submission.payload.applicationReason ?? submission.payload.details ?? "—"}
         </p>
@@ -101,7 +101,7 @@ const FeedbackApprovalPage = createApprovalPage({
 
       {submission.payload.contactNumber || submission.payload.contactMethod ? (
         <div className="space-y-1">
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">联系电话</h3>
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Contact Number</h3>
           <p className="text-sm text-gray-700 dark:text-gray-300">
             {submission.payload.contactNumber ?? submission.payload.contactMethod}
           </p>
@@ -109,14 +109,14 @@ const FeedbackApprovalPage = createApprovalPage({
       ) : null}
 
       <div className="space-y-1">
-        <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">提交账号</h3>
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Submitted By</h3>
         <p className="text-sm text-gray-700 dark:text-gray-300">{submission.submittedBy}</p>
       </div>
 
       {renderSubmittedInfo(submission)}
 
       <div className="space-y-1">
-        <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">状态</h3>
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Status</h3>
         <p className="text-sm capitalize text-gray-700 dark:text-gray-300">
           {submission.status}
         </p>
