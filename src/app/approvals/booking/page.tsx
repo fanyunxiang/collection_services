@@ -2,40 +2,58 @@
 
 import { createApprovalPage } from "../_components/createApprovalPage";
 
+function formatSchedule(submission: any): string {
+  const date =
+    submission.payload.appointmentDate ?? submission.payload.preferredDate ?? "";
+  const time =
+    submission.payload.appointmentTime ?? submission.payload.preferredTime ?? "";
+
+  if (!date) {
+    return "—";
+  }
+
+  try {
+    return new Date(`${date}T${time || "00:00"}`).toLocaleString();
+  } catch (error) {
+    return `${date} ${time}`.trim();
+  }
+}
+
 const BookingApprovalPage = createApprovalPage({
   type: "booking",
-  title: "Booking Service Approvals",
-  description:
-    "Review appointment requests from users and confirm whether the requested slot can be honored.",
-  emptyLabel: "There are no booking requests waiting for approval.",
+  title: "Medical Certificate Application Reviews",
+  description: "Review medical certificate applications and verify the requested schedule and purpose before making a decision.",
+  emptyLabel: "There are no medical certificate applications awaiting review.",
   columns: [
     {
-      header: "Request",
-      render: (submission) => (
-        <div className="space-y-1">
-          <p className="font-medium text-gray-900 dark:text-gray-100">
-            {submission.payload.serviceName}
-          </p>
-          {submission.payload.notes ? (
-            <p className="text-xs text-gray-600 dark:text-gray-300 break-words">
-              {submission.payload.notes}
-            </p>
-          ) : null}
-        </div>
-      ),
+      header: "Patient Details",
+      render: (submission) => {
+        const name = submission.payload.patientName ?? submission.payload.serviceName ?? "—";
+        const purpose =
+          submission.payload.certificatePurpose ?? submission.payload.notes ?? "—";
+
+        return (
+          <div className="space-y-1">
+            <p className="font-medium text-gray-900 dark:text-gray-100">{name}</p>
+            <p className="text-xs text-gray-600 dark:text-gray-300 break-words">Purpose: {purpose}</p>
+          </div>
+        );
+      },
     },
     {
-      header: "Preferred slot",
+      header: "Appointment Slot",
       className: "whitespace-nowrap",
-      render: (submission) =>
-        new Date(
-          `${submission.payload.preferredDate}T${submission.payload.preferredTime || "00:00"}`,
-        ).toLocaleString(),
+      render: (submission) => formatSchedule(submission),
     },
     {
-      header: "Requested by",
+      header: "Submitted By",
       className: "whitespace-nowrap",
       render: (submission) => submission.submittedBy,
+    },
+    {
+      header: "Submitted",
+      className: "whitespace-nowrap",
+      render: (submission) => new Date(submission.createdAt).toLocaleString(),
     },
     {
       header: "Status",
@@ -47,49 +65,53 @@ const BookingApprovalPage = createApprovalPage({
       ),
     },
   ],
-  renderDetails: (submission) => (
-    <div className="grid gap-4 md:grid-cols-2">
-      <div className="space-y-1">
-        <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Service</h3>
-        <p className="text-sm text-gray-700 dark:text-gray-300">{submission.payload.serviceName}</p>
-      </div>
-      <div className="space-y-1">
-        <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Preferred schedule</h3>
-        <p className="text-sm text-gray-700 dark:text-gray-300">
-          {new Date(`${submission.payload.preferredDate}T${submission.payload.preferredTime || "00:00"}`).toLocaleString()}
-        </p>
-      </div>
-      {submission.payload.notes ? (
-        <div className="space-y-1 md:col-span-2">
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Additional notes</h3>
-          <p className="text-sm text-gray-700 dark:text-gray-300">{submission.payload.notes}</p>
-        </div>
-      ) : null}
-      <div className="space-y-1">
-        <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Requested by</h3>
-        <p className="text-sm text-gray-700 dark:text-gray-300">{submission.submittedBy}</p>
-      </div>
-      <div className="space-y-1">
-        <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Submitted</h3>
-        <p className="text-sm text-gray-700 dark:text-gray-300">{new Date(submission.createdAt).toLocaleString()}</p>
-      </div>
-      <div className="space-y-1">
-        <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Status</h3>
-        <p className="text-sm capitalize text-gray-700 dark:text-gray-300">{submission.status}</p>
-      </div>
-      {submission.decisionBy ? (
+  renderDetails: (submission) => {
+    return (
+      <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-1">
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Reviewed by</h3>
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Patient Name</h3>
           <p className="text-sm text-gray-700 dark:text-gray-300">
-            {submission.decisionBy}
-            {submission.decidedAt
-              ? ` · ${new Date(submission.decidedAt).toLocaleString()}`
-              : ""}
+            {submission.payload.patientName ?? submission.payload.serviceName ?? "—"}
           </p>
         </div>
-      ) : null}
-    </div>
-  ),
+        <div className="space-y-1">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Appointment Slot</h3>
+          <p className="text-sm text-gray-700 dark:text-gray-300">{formatSchedule(submission)}</p>
+        </div>
+        <div className="space-y-1 md:col-span-2">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Purpose</h3>
+          <p className="text-sm text-gray-700 dark:text-gray-300">
+            {submission.payload.certificatePurpose ?? submission.payload.notes ?? "—"}
+          </p>
+        </div>
+        <div className="space-y-1">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Submitted By</h3>
+          <p className="text-sm text-gray-700 dark:text-gray-300">{submission.submittedBy}</p>
+        </div>
+        <div className="space-y-1">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Submitted</h3>
+          <p className="text-sm text-gray-700 dark:text-gray-300">
+            {new Date(submission.createdAt).toLocaleString()}
+          </p>
+        </div>
+        <div className="space-y-1">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Status</h3>
+          <p className="text-sm capitalize text-gray-700 dark:text-gray-300">{submission.status}</p>
+        </div>
+        {submission.decisionBy ? (
+          <div className="space-y-1">
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Reviewer</h3>
+            <p className="text-sm text-gray-700 dark:text-gray-300">
+              {submission.decisionBy}
+              {submission.decidedAt
+                ? ` · ${new Date(submission.decidedAt).toLocaleString()}`
+                : ""}
+            </p>
+          </div>
+        ) : null}
+      </div>
+    );
+  },
 });
 
 export default BookingApprovalPage;

@@ -38,22 +38,22 @@ function findFirstUrl(sections: SidebarSection[]): string | null {
 
 const USER_SECTIONS: SidebarSection[] = [
   {
-    label: "SERVICES",
+    label: "Services",
     items: [
       {
-        title: "Feedback Service",
+        title: "Driver's License Application",
         icon: Icons.FourCircle,
         url: "/feedback",
         items: [],
       },
       {
-        title: "Booking Service",
+        title: "Medical Certificate Application",
         icon: Icons.Calendar,
         url: "/booking",
         items: [],
       },
       {
-        title: "Document Request Service",
+        title: "Tax Refund Application",
         icon: Icons.Table,
         url: "/documents",
         items: [],
@@ -64,22 +64,22 @@ const USER_SECTIONS: SidebarSection[] = [
 
 const ADMIN_SECTIONS: SidebarSection[] = [
   {
-    label: "APPROVALS",
+    label: "Approvals",
     items: [
       {
-        title: "Feedback Service Approvals",
+        title: "Driver's License Reviews",
         icon: Icons.FourCircle,
         url: "/approvals/feedback",
         items: [],
       },
       {
-        title: "Booking Service Approvals",
+        title: "Medical Certificate Reviews",
         icon: Icons.Calendar,
         url: "/approvals/booking",
         items: [],
       },
       {
-        title: "Document Service Approvals",
+        title: "Tax Refund Reviews",
         icon: Icons.Table,
         url: "/approvals/documents",
         items: [],

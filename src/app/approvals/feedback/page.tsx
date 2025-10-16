@@ -4,22 +4,25 @@ import { createApprovalPage } from "../_components/createApprovalPage";
 import { formatDate } from "@/lib/tools";
 
 // Helper render functions
-const renderFeedbackInfo = (submission: any) => (
-  <div className="space-y-1">
-    <p className="font-medium text-gray-900 dark:text-gray-100">
-      {submission.payload.subject}
-    </p>
-    <p className="text-xs text-gray-600 dark:text-gray-300 break-words">
-      {submission.payload.details}
-    </p>
-  </div>
-);
+const renderApplicationInfo = (submission: any) => {
+  const applicant =
+    submission.payload.applicantName ?? submission.payload.subject ?? "—";
+  const reason =
+    submission.payload.applicationReason ?? submission.payload.details ?? "—";
+
+  return (
+    <div className="space-y-1">
+      <p className="font-medium text-gray-900 dark:text-gray-100">{applicant}</p>
+      <p className="text-xs text-gray-600 dark:text-gray-300 break-words">
+        Reason: {reason}
+      </p>
+    </div>
+  );
+};
 
 const renderSubmittedInfo = (submission: any) => (
   <div className="space-y-1">
-    <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-      Submitted
-    </h3>
+    <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Submitted</h3>
     <p className="text-sm text-gray-700 dark:text-gray-300">
       {formatDate(submission.createdAt)}
     </p>
@@ -29,9 +32,7 @@ const renderSubmittedInfo = (submission: any) => (
 const renderReviewerInfo = (submission: any) =>
   submission.decisionBy ? (
     <div className="space-y-1">
-      <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-        Reviewed by
-      </h3>
+      <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Reviewer</h3>
       <p className="text-sm text-gray-700 dark:text-gray-300">
         {submission.decisionBy}
         {submission.decidedAt ? ` · ${formatDate(submission.decidedAt)}` : ""}
@@ -42,19 +43,24 @@ const renderReviewerInfo = (submission: any) =>
 // Main component
 const FeedbackApprovalPage = createApprovalPage({
   type: "feedback",
-  title: "Feedback Service Approvals",
-  description:
-    "Review feedback submissions from end users and approve them once they have been addressed.",
-  emptyLabel: "There are no feedback submissions waiting for review.",
+  title: "Driver's License Application Reviews",
+  description: "Review driver's license applications and confirm the details before approving.",
+  emptyLabel: "There are no driver's license applications awaiting review.",
   columns: [
     {
-      header: "Feedback",
-      render: renderFeedbackInfo,
+      header: "Applicant",
+      render: renderApplicationInfo,
     },
     {
-      header: "Submitted by",
+      header: "License Class",
       className: "whitespace-nowrap",
-      render: (submission) => submission.submittedBy,
+      render: (submission) => submission.payload.licenseType ?? "—",
+    },
+    {
+      header: "Contact Number",
+      className: "whitespace-nowrap",
+      render: (submission) =>
+        submission.payload.contactNumber ?? submission.payload.contactMethod ?? "—",
     },
     {
       header: "Submitted",
@@ -74,31 +80,43 @@ const FeedbackApprovalPage = createApprovalPage({
   renderDetails: (submission) => (
     <div className="grid gap-4 md:grid-cols-2">
       <div className="space-y-1">
-        <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Feedback details</h3>
-        <p className="text-sm text-gray-700 dark:text-gray-300">{submission.payload.details}</p>
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Applicant</h3>
+        <p className="text-sm text-gray-700 dark:text-gray-300">
+          {submission.payload.applicantName ?? submission.payload.subject ?? "—"}
+        </p>
       </div>
       <div className="space-y-1">
-        <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Subject</h3>
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">License Class</h3>
         <p className="text-sm text-gray-700 dark:text-gray-300">
-          {submission.payload.subject}
+          {submission.payload.licenseType ?? "—"}
         </p>
       </div>
 
-      {submission.payload.contactMethod && (
+      <div className="space-y-1 md:col-span-2">
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Application Reason</h3>
+        <p className="text-sm text-gray-700 dark:text-gray-300">
+          {submission.payload.applicationReason ?? submission.payload.details ?? "—"}
+        </p>
+      </div>
+
+      {submission.payload.contactNumber || submission.payload.contactMethod ? (
         <div className="space-y-1">
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Preferred contact</h3>
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Contact Number</h3>
           <p className="text-sm text-gray-700 dark:text-gray-300">
-            {submission.payload.contactMethod}
+            {submission.payload.contactNumber ?? submission.payload.contactMethod}
           </p>
         </div>
-      )}
+      ) : null}
+
+      <div className="space-y-1">
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Submitted By</h3>
+        <p className="text-sm text-gray-700 dark:text-gray-300">{submission.submittedBy}</p>
+      </div>
 
       {renderSubmittedInfo(submission)}
 
       <div className="space-y-1">
-        <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-          Status
-        </h3>
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Status</h3>
         <p className="text-sm capitalize text-gray-700 dark:text-gray-300">
           {submission.status}
         </p>
